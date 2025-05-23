@@ -1,0 +1,74 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "drim2p"
+dynamic = ["version"]
+description = 'A dreamy 2-photon imaging processing pipeline.'
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+keywords = ["2-photon", "two-photon", "imaging", "neuroscience", "processing"]
+authors = [
+  { name = "Olivier Delrée", email = "olivierdelree@protonmail.com" },
+  { name = "Constantinos Eleftheriou", email = "Constantinos.Eleftheriou@ed.ac.uk" },
+  { name = "Sophie Holland", email = "S.G.Holland@sms.ed.ac.uk" },
+  { name = "Michelle Sanchez", email = "michelle.sr11@gmail.com" },
+]
+classifiers = [
+  "Development Status :: 1 - Planning",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "Topic :: Scientific/Engineering :: Image Processing",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = []
+
+[project.urls]
+Documentation = "https://github.com/DuguidLab/drim2p#readme"
+Issues = "https://github.com/DuguidLab/drim2p/issues"
+Source = "https://github.com/DuguidLab/drim2p"
+
+[tool.hatch.version]
+path = "src/drim2p/__about__.py"
+
+# `types` environment
+[tool.hatch.envs.types]
+dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/drim2p/ tests/}"
+
+# `test` environment
+[tool.hatch.envs.test]
+dependencies = [
+  "pytest",
+  "pytest-cov",
+]
+[tool.hatch.envs.test.scripts]
+run-coverage = "pytest --cov=src/drim2p --cov-report=term-missing:skip-covered --cov-report=html"
+run-coverage-browser = "run-coverage ; open htmlcov/index.html"
+run = "run-coverage --no-cov"
+
+# `coverage` config
+[tool.coverage.run]
+source_pkgs = ["drim2p", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/drim2p/__about__.py",
+]
+[tool.coverage.paths]
+drim2p = ["src/drim2p", "*/drim2p/src/drim2p"]
+tests = ["tests", "*/drim2p/tests"]
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
