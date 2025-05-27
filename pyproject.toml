@@ -26,7 +26,9 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Image Processing",
   "Topic :: Scientific/Engineering :: Information Analysis",
 ]
-dependencies = []
+dependencies = [
+  "click",
+]
 
 [project.urls]
 Documentation = "https://github.com/DuguidLab/drim2p#readme"
@@ -35,6 +37,9 @@ Source = "https://github.com/DuguidLab/drim2p"
 
 [tool.hatch.version]
 path = "src/drim2p/__about__.py"
+
+[project.scripts]
+drim2p = "drim2p:drim2p"
 
 # `types` environment
 [tool.hatch.envs.types]
