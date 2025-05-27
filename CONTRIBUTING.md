@@ -2,7 +2,7 @@
 
 It takes team work to make `drim2p` work.
 
-# Contributing code
+## Contributing code
 
 
 ## Everything must be an Issue
