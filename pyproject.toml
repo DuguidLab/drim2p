@@ -39,7 +39,7 @@ path = "src/drim2p/__about__.py"
 # `types` environment
 [tool.hatch.envs.types]
 dependencies = [
-  "mypy>=1.0.0",
+  "mypy[reports]>=1.0.0",
 ]
 [tool.hatch.envs.types.scripts]
 check = "mypy --install-types --non-interactive {args:src/drim2p/ tests/}"
@@ -54,6 +54,16 @@ dependencies = [
 run-coverage = "pytest --cov=src/drim2p --cov-report=term-missing:skip-covered --cov-report=html"
 run-coverage-browser = "run-coverage ; open htmlcov/index.html"
 run = "run-coverage --no-cov"
+
+# `mypy` config
+[tool.mypy]
+strict = true
+pretty = true
+#allow_redefinition_new = true  # Enable when mypy 1.16 drops
+allow_redefinition = true
+warn_unreachable = true
+show_error_code_links = true
+html_report = "mypy-report/"
 
 # `coverage` config
 [tool.coverage.run]
