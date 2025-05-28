@@ -17,10 +17,10 @@ There are a few reasons for this, but primarily it's to keep things consistent a
 ### 3. Motion correction
 
 
-### 4. Signal decontamination
+### 4. ROI drawing
 
 
-### 5. ROI drawing
+### 5. Signal decontamination
 
 
 ### 6. Signal extraction
