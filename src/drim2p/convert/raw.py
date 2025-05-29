@@ -50,6 +50,21 @@ _logger = logging.getLogger(__name__)
     help="Whether to search directories recursively when looking for RAW files.",
 )
 @click.option(
+    "--no-compression",
+    required=False,
+    is_flag=True,
+    help="Whether to disable compression for the output HDF5 files.",
+)
+@click.option(
+    "--aggression",
+    required=False,
+    type=click.IntRange(0, 9),
+    help=(
+        "Aggression level to use for GZIP compression. Lower means faster/worse "
+        "compression, higher means slower/better compression."
+    ),
+)
+@click.option(
     "--force",
     required=False,
     is_flag=True,
@@ -59,6 +74,8 @@ def convert_raw(
     source: pathlib.Path | None = None,
     out: pathlib.Path | None = None,
     recursive: bool = False,
+    no_compression: bool = False,
+    aggression: int = 4,
     force: bool = False,
 ) -> None:
     """Converts RAW data and metadata to HDF5.
@@ -81,6 +98,12 @@ def convert_raw(
             Optional output directory for converted files.
         recursive (bool, optional):
             Whether to search directories recursively when looking for RAW files.
+        no_compression (bool, optional):
+            Whether to disable compression for the output HDF5 files.
+        aggression (int, optional):
+            Aggression level to use for GZIP compression. Lower means faster/worse
+            compression, higher means slower/better compression. This should be in the
+            range 0 <= value <= 9.
         force (bool, optional): Whether to overwrite output files if they exist.
     """
     # Follow `click` recommended best-practice and NO-OP if no source is given.
@@ -162,8 +185,15 @@ def convert_raw(
 
         # Output as HDF5
         _logger.debug(f"Writing to HDF5 ({out_path}).")
+        compression = None if no_compression else "gzip"
+        compression_opts = None if no_compression else aggression
         with h5py.File(out_path, "w") as handle:
-            dataset = handle.create_dataset("data", data=array)
+            dataset = handle.create_dataset(
+                "data",
+                data=array,
+                compression=compression,
+                compression_opts=compression_opts,
+            )
 
             for key, value in ini_metadata.items():
                 dataset.attrs[key] = value
