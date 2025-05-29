@@ -7,7 +7,7 @@ import sys
 
 import click
 
-from drim2p import logging_
+from drim2p import convert, logging_
 
 _logger = logging.getLogger("drim2p")
 
@@ -62,6 +62,9 @@ def set_up_logging(level: int, no_colour: bool) -> None:
         _logger.setLevel(logging.INFO)
     elif level > 1:
         _logger.setLevel(logging.DEBUG)
+
+
+drim2p.add_command(convert.convert)
 
 
 if __name__ == "__main__":
