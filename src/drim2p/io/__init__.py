@@ -4,6 +4,7 @@
 
 from collections.abc import Iterable
 import pathlib
+import re
 
 
 def collect_paths_from_extensions(
@@ -60,3 +61,74 @@ def collect_paths_from_extensions(
                 collected.append(path)
 
     return collected
+
+
+def filter_paths_from_include_exclude(
+    paths: Iterable[pathlib.Path],
+    include: str | None = None,
+    exclude: str | None = None,
+    separator: str = ";",
+    strict: bool = False,
+) -> list[pathlib.Path]:
+    """Filters paths based on include and exclude strings.
+
+    Args:
+        paths (Iterable[pathlib.Path]): Paths to filter.
+        include (str | None, optional):
+            String of the include filters separated by `separator`.
+        exclude (str | None, optional):
+            String of the exclude filters separated by `separator`.
+        separator (str, optional):
+            A single-character separator used to separate different filters.
+        strict (bool, optional):
+            Whether to automatically exclude files that do not match any of the include
+            filters event if they are not matched by any of the exclude filters.
+
+    Returns:
+        A list of the paths as filtered by the input strings.
+    """
+    # NO-OP if neither include nor exclude is set
+    if include is None and exclude is None:
+        return list(paths)
+
+    include = split_string(include, separator) if include is not None else []
+    exclude = split_string(exclude, separator) if exclude is not None else []
+
+    # First, filter which paths should be included based on `include` and `strict`
+    included = []
+    for path in paths:
+        for filter in include:
+            if re.findall(filter, str(path)):
+                included.append(path)
+                continue
+        if not strict or not include:
+            included.append(path)
+
+    # Then, exclude any path previously selected if it matches an `exclude`
+    filtered = []
+    for path in included:
+        for filter in exclude:
+            if re.findall(filter, str(path)):
+                break
+        else:
+            filtered.append(path)
+
+    return filtered
+
+
+def split_string(string: str, separator: str = ";") -> list[str]:
+    """Splits a string on non-escaped `separator` occurrences.
+
+    Args:
+        string (str): String to split.
+        separator (str, optional): A single-character separator to split on.
+
+    Returns:
+        A list containing the substrings after splitting.
+    """
+    if len(separator) > 1:
+        raise ValueError(f"Separator should be a single character. Got '{separator}'.")
+
+    return re.split(
+        rf"(?<!(?<!\\)\\){separator}", string
+    )  # Only split on separators that are not escaped, while allowing "\\{separator}"

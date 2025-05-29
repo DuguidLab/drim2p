@@ -50,6 +50,37 @@ _logger = logging.getLogger(__name__)
     help="Whether to search directories recursively when looking for RAW files.",
 )
 @click.option(
+    "-i",
+    "--include",
+    required=False,
+    default=None,
+    help=(
+        "Include filters to apply when searching for RAW files. "
+        "This supports regular-expressions. Include filters are applied before any "
+        "exclude filters."
+    ),
+)
+@click.option(
+    "-e",
+    "--exclude",
+    required=False,
+    default=None,
+    help=(
+        "Exclude filters to apply when searching for RAW files. "
+        "This supports regular-expressions. Exclude filters are applied after all "
+        "include filters."
+    ),
+)
+@click.option(
+    "--strict-filters",
+    required=False,
+    is_flag=True,
+    help=(
+        "Whether files not matching any include filter should be excluded, regardless "
+        "of exclude filters. This is ignored if no include filters are provided."
+    ),
+)
+@click.option(
     "--no-compression",
     required=False,
     is_flag=True,
@@ -74,6 +105,9 @@ def convert_raw(
     source: pathlib.Path | None = None,
     out: pathlib.Path | None = None,
     recursive: bool = False,
+    include: str | None = None,
+    exclude: str | None = None,
+    strict_filters: bool = False,
     no_compression: bool = False,
     aggression: int = 4,
     force: bool = False,
@@ -98,6 +132,15 @@ def convert_raw(
             Optional output directory for converted files.
         recursive (bool, optional):
             Whether to search directories recursively when looking for RAW files.
+        include (str | None, optional):
+            Include filters to apply when searching for RAW files. This supports
+            regular-expressions. Include filters are applied before any exclude filters.
+        exclude (str | None, optional):
+            Exclude filters to apply when searching for RAW files. This supports
+            regular-expressions. Exclude filters are applied after all include filters.
+        strict_filters (bool, optional):
+            Whether files not matching any include filter should be excluded, regardless
+            of exclude filters. This is ignored if no include filters are provided.
         no_compression (bool, optional):
             Whether to disable compression for the output HDF5 files.
         aggression (int, optional):
@@ -118,6 +161,9 @@ def convert_raw(
         raw_paths = io.collect_paths_from_extensions(
             source, [".raw"], recursive, strict=True
         )
+    raw_paths = io.filter_paths_from_include_exclude(
+        raw_paths, include, exclude, strict=strict_filters
+    )
     _logger.debug(f"{len(raw_paths)} path(s) collected.")
 
     for path in raw_paths:
