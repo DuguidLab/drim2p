@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 import configparser
+import datetime
 import pathlib
 import re
 from typing import Any
@@ -10,6 +11,11 @@ import warnings
 
 import numpy as np
 import ome_types
+
+from drim2p import models
+
+NOTES_ENTRY_PATTERN = re.compile(r"^-+$\n((?:.|\n)+?)\n^-+$\n", flags=re.MULTILINE)
+"""Pattern of a notes entry. It consists of lines of text between two lines of '-'s."""
 
 
 def parse_essential_metadata_from_ome_xml(
@@ -101,6 +107,32 @@ def parse_metadata_from_ini(
 
     config = dict(parser["_"])
     return config if not typed else parse_ini_config_as_typed(config)
+
+
+def parse_notes_entries(text: str) -> list[models.NotesEntry]:
+    """Parses notes entries from a text.
+
+    Args:
+        text (str): Text containing the notes entries to parse.
+
+    Returns:
+        A list of entries as `models.NotesEntry`s.
+    """
+    entry_strings = re.findall(NOTES_ENTRY_PATTERN, text)
+
+    entries = []
+    for string in entry_strings:
+        start_time, _, file_path, *_, end_time = string.split("\n")
+
+        entries.append(
+            models.NotesEntry(
+                start_time=datetime.datetime.fromisoformat(start_time),
+                file_path=pathlib.Path(file_path),
+                end_time=datetime.datetime.fromisoformat(end_time),
+            )
+        )
+
+    return entries
 
 
 def read_raw_as_numpy(
