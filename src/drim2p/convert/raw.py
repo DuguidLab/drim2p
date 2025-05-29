@@ -2,13 +2,17 @@
 #
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
+
 import logging
 import pathlib
+from typing import Any
 
 import click
 import h5py
+import pandas as pd
 
-from drim2p import io
+from drim2p import io, models
 from drim2p.io import raw as raw_io
 
 _logger = logging.getLogger(__name__)
@@ -96,6 +100,12 @@ _logger = logging.getLogger(__name__)
     ),
 )
 @click.option(
+    "--generate-timestamps",
+    required=False,
+    is_flag=True,
+    help="Whether to generate timestamps from the notes entries of the RAW files.",
+)
+@click.option(
     "--force",
     required=False,
     is_flag=True,
@@ -110,6 +120,7 @@ def convert_raw(
     strict_filters: bool = False,
     no_compression: bool = False,
     aggression: int = 4,
+    generate_timestamps: bool = False,
     force: bool = False,
 ) -> None:
     """Converts RAW data and metadata to HDF5.
@@ -122,6 +133,9 @@ def convert_raw(
     optional if the INI metadata contains a string of it. Otherwise, the OME-XML file
     should have the same name except for `_XYT` replaced with `_OME` and the extension
     changed to `.xml`.
+
+    If `generate_timestamps` is set, a `.notes.txt` file with the same name as the RAW
+    file should also be present.
     \f
 
     Args:
@@ -147,6 +161,9 @@ def convert_raw(
             Aggression level to use for GZIP compression. Lower means faster/worse
             compression, higher means slower/better compression. This should be in the
             range 0 <= value <= 9.
+        generate_timestamps (bool, optional):
+            Whether to generate timestamps from the notes entries of the RAW files. A
+            ".notes.txt" file should be present along the RAW file when this is set.
         force (bool, optional): Whether to overwrite output files if they exist.
     """
     # Follow `click` recommended best-practice and NO-OP if no source is given.
@@ -225,6 +242,11 @@ def convert_raw(
 
         shape, dtype = raw_io.parse_essential_metadata_from_ome_xml(xml_string)
 
+        # Generate timestamps if requested
+        timestamps = None
+        if generate_timestamps:
+            timestamps = _generate_timestamps(path, ini_metadata)
+
         # Convert RAW to numpy
         _logger.debug(f"Reading as array using metadata: {shape=}, {dtype=}.")
         array = raw_io.read_raw_as_numpy(path, shape, dtype)
@@ -243,3 +265,71 @@ def convert_raw(
 
             for key, value in ini_metadata.items():
                 dataset.attrs[key] = value
+
+            if timestamps is not None:
+                handle.create_dataset(
+                    "timestamps",
+                    data=timestamps,
+                    compression=compression,
+                    compression_opts=compression_opts,
+                )
+
+
+def _generate_timestamps(
+    raw_path: pathlib.Path, ini_metadata: dict[str, Any]
+) -> pd.Series[float] | None:
+    notes_path = raw_path.with_suffix(".notes.txt")
+    if not notes_path.exists():
+        _logger.error(
+            "Requested to generate timestamps but notes file is not present. "
+            "Skipping timestamp generation."
+        )
+        return None
+
+    entries = raw_io.parse_notes_entries(notes_path.open().read())
+    # Notes may have entries for multiple recordings, find the relevant one
+    entries = list(filter(lambda x: x.pure_file_path.match(raw_path.name), entries))
+    if len(entries) > 1:
+        _logger.error(
+            f"Found multiple notes entries matching RAW file '{raw_path}'. "
+            f"Skipping timestamp generation."
+        )
+        return None
+    elif len(entries) < 1:
+        _logger.error(
+            f"Could not find a notes entry matching RAW file '{raw_path}'. "
+            f"Skipping timestamp generation."
+        )
+        return None
+
+    # Only a single matched entry, good to go
+    frame_count = ini_metadata.get("frame.count")
+    if frame_count is None:
+        _logger.error(
+            f"Requested to generate timestamps but frame count could "
+            f"not be retrieved from INI metadata. Skipping timestamp "
+            f"generation."
+        )
+        return None
+
+    timestamps = generate_timestamps_for_note_entry(entries[0], int(frame_count))
+    _logger.debug(f"Generated timestamps for {int(frame_count)} frames.")
+    return timestamps
+
+
+def generate_timestamps_for_note_entry(
+    entry: models.NotesEntry, frame_count: int
+) -> pd.Series[float]:
+    """Generates a timestamps series for a given notes entry and a frame count.
+
+    Args:
+        entry (models.NotesEntry): Entry for which to generate timestamps.
+        frame_count (int): Integer count of the frames for the given entry.
+
+    Returns:
+        A series of timestamps for each frame.
+    """
+    delta = entry.timedelta_ms
+    frame_spacing = delta / frame_count
+
+    return pd.Series(list((i * frame_spacing for i in range(frame_count))))
