@@ -7,7 +7,7 @@ import sys
 
 import click
 
-from drim2p import convert, logging_
+from drim2p import convert, logging_, motion
 
 _logger = logging.getLogger("drim2p")
 
@@ -65,6 +65,7 @@ def set_up_logging(level: int, no_colour: bool) -> None:
 
 
 drim2p.add_command(convert.convert)
+drim2p.add_command(motion.motion)
 
 
 if __name__ == "__main__":

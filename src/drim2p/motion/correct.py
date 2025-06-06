@@ -1,0 +1,236 @@
+# SPDX-FileCopyrightText: © 2025 Olivier Delrée <olivierdelree@protonmail.com>
+#
+# SPDX-License-Identifier: MIT
+
+import logging
+import pathlib
+import shutil
+import time
+from typing import Any
+
+import click
+import h5py
+import numpy as np
+import sima
+
+from drim2p import io, models
+
+_logger = logging.getLogger(__name__)
+
+
+@click.command
+@click.argument(
+    "source",
+    required=False,
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=True,
+        readable=True,
+        path_type=pathlib.Path,
+    ),
+)
+@click.option(
+    "-s",
+    "--settings-path",
+    required=False,
+    type=click.Path(exists=True, file_okay=True, dir_okay=False),
+    help="Path to the settings file to use.",
+)
+@click.option(
+    "-r",
+    "--recursive",
+    required=False,
+    is_flag=True,
+    help="Whether to search directories recursively when looking for RAW files.",
+)
+@click.option(
+    "-i",
+    "--include",
+    required=False,
+    default=None,
+    help=(
+        "Include filters to apply when searching for RAW files. "
+        "This supports regular-expressions. Include filters are applied before any "
+        "exclude filters."
+    ),
+)
+@click.option(
+    "-e",
+    "--exclude",
+    required=False,
+    default=None,
+    help=(
+        "Exclude filters to apply when searching for RAW files. "
+        "This supports regular-expressions. Exclude filters are applied after all "
+        "include filters."
+    ),
+)
+@click.option(
+    "--strict-filters",
+    required=False,
+    is_flag=True,
+    help=(
+        "Whether files not matching any include filter should be excluded, regardless "
+        "of exclude filters. This is ignored if no include filters are provided."
+    ),
+)
+@click.option(
+    "--force",
+    required=False,
+    is_flag=True,
+    help="Whether to overwrite output datasets if they exist.",
+)
+def apply_motion_correction_command(**kwargs: Any) -> None:
+    """Applies motion correction on HDF5 chunks.
+
+    The motion correction is configured through a TOML settings file (available from
+    the source code in the resources directory). The file allows customising behaviour
+    such as the strategy to use or the maximum displacement allowed.
+    """
+    apply_motion_correction(**kwargs)
+
+
+def apply_motion_correction(
+    source: pathlib.Path | None = None,
+    settings_path: pathlib.Path | None = None,
+    recursive: bool = False,
+    include: str | None = None,
+    exclude: str | None = None,
+    strict_filters: bool = False,
+    force: bool = False,
+) -> None:
+    """Applies motion correction on HDF5 chunks.
+
+    The motion correction is configured through a TOML settings file (available from
+    the source code in the resources directory). The file allows customising behaviour
+    such as the strategy to use or the maximum displacement allowed.
+
+    Args:
+        source (pathlib.Path | None, optional):
+            Source file or directory to convert. If a directory, the default is to look
+            for HDF5 (.h5) files inside of it without recursion.
+        settings_path (pathlib.Path | None, optional):
+            Path to the settings.toml file to use to configure motion correction.
+        recursive (bool, optional):
+            Whether to search directories recursively when looking for HDF5 files.
+        include (str | None, optional):
+            Include filters to apply when searching for HDF5 files. This supports
+            regular-expressions. Include filters are applied before any exclude filters.
+        exclude (str | None, optional):
+            Exclude filters to apply when searching for HDF5 files. This supports
+            regular-expressions. Exclude filters are applied after all include filters.
+        strict_filters (bool, optional):
+            Whether files not matching any include filter should be excluded, regardless
+            of exclude filters. This is ignored if no include filters are provided.
+        force (bool, optional): Whether to ovewrite output datasets if they exist.
+    """
+    # Follow `click` recommended best-practice and NO-OP if no source is given.
+    # See https://github.com/pallets/click/blob/2d610e36a429bfebf0adb0ca90cdc0585f296369/docs/arguments.rst?plain=1#L43
+    if source is None:
+        return
+    elif settings_path is None:
+        _logger.error("Please provide a settings file.")
+        return
+
+    # Collect HDF5 file paths to correct
+    _logger.debug("Collecting HDF5 paths.")
+    hdf5_paths = [source]
+    if source.is_dir():
+        hdf5_paths = io.collect_paths_from_extensions(
+            source, [".h5"], recursive, strict=True
+        )
+    hdf5_paths = io.filter_paths(hdf5_paths, include, exclude)
+    _logger.debug(f"{len(hdf5_paths)} path(s) collected.")
+
+    # Load the settings
+    settings = models.MotionConfig.from_file(settings_path)
+
+    for path in hdf5_paths:
+        _logger.debug(f"Motion correcting '{path}'.")
+
+        _apply_motion_correction(path, settings, force)
+
+
+def _apply_motion_correction(
+    path: pathlib.Path, settings: models.MotionConfig, force: bool = False
+) -> None:
+    # Keep own handle to check for motion correction dataset
+    file = h5py.File(path, "a", locking=False)
+
+    if "imaging" in list(file) and not force:
+        _logger.info(
+            f"Skipping '{path}' as it was already corrected and --force is not set."
+        )
+        return
+
+    # Retrieve strategy object
+    match settings.strategy:
+        case models.Strategy.Markov:
+            strategy = sima.motion.HiddenMarkov2D(
+                granularity="plane",
+                max_displacement=settings.displacement,
+                verbose=True,
+            )
+        case models.Strategy.Plane:
+            strategy = sima.motion.PlaneTranslation2D(
+                max_displacement=settings.displacement
+            )
+        case models.Strategy.Fourier:
+            strategy = sima.motion.DiscreteFourier2D(
+                max_displacement=settings.displacement
+            )
+        case _:
+            raise NotImplementedError(f"Strategy '{settings.strategy}' not implemented")
+
+    # Start motion correction
+    _logger.info(
+        f"Applying motion correction for '{path.stem}' using {settings.strategy.value}."
+    )
+    start_time = time.perf_counter()
+
+    # Where sima puts dataset information during motion correction
+    temp_sima_dataset_path = path.parent / f".{path.stem}.sima"
+
+    # Create a `Sequence` object from the HDF5 file that sima understands
+    sequences = [sima.Sequence.create("HDF5", path, key="data", dim_order="tyx")]
+    # Motion correct
+    dataset, displacements = strategy.correct(sequences, temp_sima_dataset_path)
+
+    duration = time.perf_counter() - start_time
+    hours, duration = divmod(duration, 3600)
+    minutes, duration = divmod(duration, 60)
+    time_string = f"{hours:.0f}h {minutes:.0f}m {duration:.2f}s"
+    _logger.info(f"Finished motion correction in {time_string}.")
+
+    # TODO: Write motion correction parameters to file
+    report_string = f"""\
+Chunk: {path.stem}
+Strategy: {settings.strategy.name}
+Displacement: {list(settings.displacement)}
+Processing time: {time_string}\
+    """
+    with open(
+        path.with_stem(path.stem + "_motion_correction_report").with_suffix("txt"), "w"
+    ) as handle:
+        handle.write(report_string)
+
+    # Save motion corrected dataset and displacements
+    if "imaging" in list(file):  # Remote corrected dataset if it exists
+        _logger.debug(f"Removing existing 'imaging' dataset from '{path}'.")
+        del file["imaging"]
+    _logger.debug(f"Saving 'imaging' dataset to '{path}'.")
+    dataset.export_frames([path], fmt="HDF5", compression="gzip")
+    _logger.debug("Saving displacements.")
+    np.savez_compressed(
+        path.with_stem(path.stem + "_displacements").with_suffix(".npz"),
+        displacements=displacements,
+    )
+
+    _logger.info("Saved motion correction to file.")
+
+    _logger.debug("Cleaning up sima directory.")
+    shutil.rmtree(
+        temp_sima_dataset_path,
+        onexc=lambda *_: _logger.debug("Failed to delete sima directory."),
+    )
