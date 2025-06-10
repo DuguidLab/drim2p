@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import pathlib
 from typing import Any
 
@@ -35,7 +36,7 @@ _logger = logging.getLogger(__name__)
     "--out",
     required=False,
     type=click.Path(
-        exists=True,
+        exists=False,
         file_okay=False,
         dir_okay=True,
         writable=True,
@@ -199,6 +200,19 @@ def convert_raw(
         raw_paths, include, exclude, strict=strict_filters
     )
     _logger.debug(f"{len(raw_paths)} path(s) collected.")
+
+    # If we are going to process at least a file, ensure the output directory exists
+    if len(raw_paths) > 0 and out is not None:
+        # First, ensure the parent of out exists. We should only support creating a
+        # single directory, not a nested hierarchy as a single typo in a path can result
+        # in a lot of folders being created in a way a user might not expect.
+        if not out.parent.exists():
+            _logger.error(
+                f"Neither provided output directory '{out}' nor its parent exist. "
+                f"Aborting."
+            )
+            return
+        os.makedirs(out, exist_ok=True)
 
     for path in raw_paths:
         # Shortcircuit early if we won't write
