@@ -111,6 +111,24 @@ _logger = logging.getLogger(__name__)
     is_flag=True,
     help="Whether to overwrite output files if they exist.",
 )
+def convert_raw_command(**kwargs: Any) -> None:
+    """Converts RAW data and metadata to HDF5.
+
+    Note that SOURCE can be either a single file or a directory. If it is a directory,
+    all the RAW files it contains will be converted.
+
+    The metadata is expected to exist alongside the RAW file(s). The INI file should
+    have the same name with only the extension changed to `.ini`. The OME-XML file is
+    optional if the INI metadata contains a string of it. Otherwise, the OME-XML file
+    should have the same name except for `_XYT` replaced with `_OME` and the extension
+    changed to `.xml`.
+
+    If `generate_timestamps` is set, a `.notes.txt` file with the same name as the RAW
+    file should also be present.
+    """
+    convert_raw(**kwargs)
+
+
 def convert_raw(
     source: pathlib.Path | None = None,
     out: pathlib.Path | None = None,
@@ -136,7 +154,6 @@ def convert_raw(
 
     If `generate_timestamps` is set, a `.notes.txt` file with the same name as the RAW
     file should also be present.
-    \f
 
     Args:
         source (pathlib.Path | None, optional):
