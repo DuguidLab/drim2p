@@ -25,7 +25,7 @@ def collect_paths_from_extensions(
         recursive (bool, optional):
             Whether to recursively visit directories when searching.
         strict (bool, optional):
-            Whether to force checked files to only have a single suffix. Bu default, the
+            Whether to force checked files to only have a single suffix. By default, the
             checked extensions can appear anywhere in the suffix list of files.
 
     Returns:
@@ -35,6 +35,11 @@ def collect_paths_from_extensions(
     def have_at_least_one_common_element(
         iterable1: Iterable[str], iterable2: Iterable[str]
     ) -> bool:
+        """Returns whether at least one element is common to both iterables.
+
+        This matches each item of iterable1 against all those of iterable2 and computes
+        whether they are the same, then returns if at least one of the matches is True.
+        """
         return any(map(lambda x: x in iterable2, iterable1))
 
     collected = []
