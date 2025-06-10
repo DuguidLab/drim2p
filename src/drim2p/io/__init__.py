@@ -73,9 +73,14 @@ def filter_paths(
     include: str | None = None,
     exclude: str | None = None,
     separator: str = ";",
-    strict: bool = False,
 ) -> list[pathlib.Path]:
     """Filters paths based on include and exclude strings.
+
+    The order of operation first includes paths using the `include` filters then
+    excludes paths using the `exclude` filters.
+    If `include` is `None`, all paths are considered included before applying exclusion
+    filters. If `exclude` is `None`, all paths included by `include` are returned. If
+    both are `None`, all paths are returned.
 
     Args:
         paths (Iterable[pathlib.Path]): Paths to filter.
@@ -85,44 +90,62 @@ def filter_paths(
             String of the exclude filters separated by `separator`.
         separator (str, optional):
             A single-character separator used to separate different filters.
-        strict (bool, optional):
-            Whether to automatically exclude files that do not match any of the include
-            filters event if they are not matched by any of the exclude filters.
 
     Returns:
-        A list of the paths as filtered by the input strings.
+        A list of the paths as filtered by the input filters.
+
+    Examples:
+        >>> paths = [
+        ...     Path("path123"),
+        ...     Path("path234"),
+        ...     Path("path345"),
+        ...     Path("path456"),
+        ... ]
+        >>> include = "1;2;3"
+        >>> exclude = "34"
+
+        >>> filter_paths(paths, include=include)
+        [Path('path123'), Path('path234'), Path('path345')]
+
+        >>> filter_paths(paths, exclude=exclude)
+        [Path('path123'), Path('path456')]
+
+        >>> filter_paths(paths, include, exclude)
+        [Path('path123')]
     """
     # NO-OP if neither include nor exclude is set
     if include is None and exclude is None:
         return list(paths)
 
-    include = split_string(include, separator) if include is not None else []
-    exclude = split_string(exclude, separator) if exclude is not None else []
+    include = None if include is None else split_string(include, separator)
+    exclude = None if exclude is None else split_string(exclude, separator)
 
     # First, filter which paths should be included based on `include` and `strict`
-    included = []
-    for path in paths:
-        for filter in include:
-            if re.findall(filter, str(path)):
-                included.append(path)
-                continue
-        if not strict or not include:
-            included.append(path)
+    included = list(paths)
+    if include is not None:
+        included = []
+        for path in paths:
+            for filter in include:
+                if re.findall(filter, str(path)):
+                    included.append(path)
+                    break
 
     # Then, exclude any path previously selected if it matches an `exclude`
-    filtered = []
-    for path in included:
-        for filter in exclude:
-            if re.findall(filter, str(path)):
-                break
-        else:
-            filtered.append(path)
+    filtered = included
+    if exclude is not None:
+        filtered = []
+        for path in included:
+            for filter in exclude:
+                if re.findall(filter, str(path)):
+                    break
+                else:
+                    filtered.append(path)
 
     return filtered
 
 
 def split_string(string: str, separator: str = ";") -> list[str]:
-    """Splits a string on non-escaped `separator` occurrences.
+    r"""Splits a string on non-escaped `separator` occurrences.
 
     Args:
         string (str): String to split.
@@ -130,6 +153,16 @@ def split_string(string: str, separator: str = ";") -> list[str]:
 
     Returns:
         A list containing the substrings after splitting.
+
+    Examples:
+        >>> split_string("foo;bar")
+        ['foo', 'bar']
+
+        >>> split_string(r"foo;b\;ar")
+        ['foo', 'b\\;ar']  # Note that printing the second item shows 'b\;ar'
+
+        >>> split_string("foo bar foo\ bar", " ")
+        ['foo', 'bar', 'foo\\;bar']
     """
     if len(separator) > 1:
         raise ValueError(f"Separator should be a single character. Got '{separator}'.")

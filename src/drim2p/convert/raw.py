@@ -105,15 +105,6 @@ _logger = logging.getLogger(__name__)
     ),
 )
 @click.option(
-    "--strict-filters",
-    required=False,
-    is_flag=True,
-    help=(
-        "Whether files not matching any include filter should be excluded, regardless "
-        "of exclude filters. This is ignored if no include filters are provided."
-    ),
-)
-@click.option(
     "--no-compression",
     required=False,
     is_flag=True,
@@ -166,7 +157,6 @@ def convert_raw(
     recursive: bool = False,
     include: str | None = None,
     exclude: str | None = None,
-    strict_filters: bool = False,
     no_compression: bool = False,
     aggression: int = 4,
     generate_timestamps: bool = False,
@@ -206,9 +196,6 @@ def convert_raw(
         exclude (str | None, optional):
             Exclude filters to apply when searching for RAW files. This supports
             regular-expressions. Exclude filters are applied after all include filters.
-        strict_filters (bool, optional):
-            Whether files not matching any include filter should be excluded, regardless
-            of exclude filters. This is ignored if no include filters are provided.
         no_compression (bool, optional):
             Whether to disable compression for the output HDF5 files.
         aggression (int, optional):
@@ -232,7 +219,7 @@ def convert_raw(
         raw_paths = io.collect_paths_from_extensions(
             source, [".raw"], recursive, strict=True
         )
-    raw_paths = io.filter_paths(raw_paths, include, exclude, strict=strict_filters)
+    raw_paths = io.filter_paths(raw_paths, include, exclude)
     _logger.debug(f"{len(raw_paths)} path(s) collected.")
 
     # If we are going to process at least a file, ensure the output directory exists
