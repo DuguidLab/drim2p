@@ -11,7 +11,7 @@ from typing import Any
 
 import click
 import h5py
-import pandas as pd
+import numpy as np
 
 from drim2p import io, models
 from drim2p.io import raw as raw_io
@@ -342,7 +342,7 @@ def convert_raw(
 
 def _generate_timestamps(
     raw_path: pathlib.Path, ini_metadata: dict[str, Any]
-) -> pd.Series[float] | None:
+) -> np.ndarray[Any, np.dtype[np.number]] | None:
     notes_path = raw_path.with_suffix(".notes.txt")
     if not notes_path.exists():
         _logger.error(
@@ -384,7 +384,7 @@ def _generate_timestamps(
 
 def generate_timestamps_for_note_entry(
     entry: models.NotesEntry, frame_count: int
-) -> pd.Series[float]:
+) -> np.ndarray[Any, np.dtype[np.number]]:
     """Generates a timestamps series for a given notes entry and a frame count.
 
     Args:
@@ -397,4 +397,4 @@ def generate_timestamps_for_note_entry(
     delta = entry.timedelta_ms
     frame_spacing = delta / frame_count
 
-    return pd.Series(list((i * frame_spacing for i in range(frame_count))))
+    return np.array([i * frame_spacing for i in range(frame_count)])
