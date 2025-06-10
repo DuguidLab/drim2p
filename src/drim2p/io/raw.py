@@ -18,7 +18,7 @@ NOTES_ENTRY_PATTERN = re.compile(r"^-+$\n((?:.|\n)+?)\n^-+$\n", flags=re.MULTILI
 """Pattern of a notes entry. It consists of lines of text between two lines of '-'s."""
 
 
-def parse_essential_metadata_from_ome_xml(
+def parse_metadata_from_ome(
     xml: pathlib.Path | str,
 ) -> tuple[tuple[int, int, int], np.dtype[np.number]]:
     """Parses type and shape information of a RAW file from its OME-XML metadata.

@@ -63,7 +63,7 @@ def collect_paths_from_extensions(
     return collected
 
 
-def filter_paths_from_include_exclude(
+def filter_paths(
     paths: Iterable[pathlib.Path],
     include: str | None = None,
     exclude: str | None = None,

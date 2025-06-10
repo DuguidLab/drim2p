@@ -232,9 +232,7 @@ def convert_raw(
         raw_paths = io.collect_paths_from_extensions(
             source, [".raw"], recursive, strict=True
         )
-    raw_paths = io.filter_paths_from_include_exclude(
-        raw_paths, include, exclude, strict=strict_filters
-    )
+    raw_paths = io.filter_paths(raw_paths, include, exclude, strict=strict_filters)
     _logger.debug(f"{len(raw_paths)} path(s) collected.")
 
     # If we are going to process at least a file, ensure the output directory exists
@@ -307,7 +305,7 @@ def convert_raw(
         else:
             _logger.debug("Using XML string from INI file.")
 
-        shape, dtype = raw_io.parse_essential_metadata_from_ome_xml(xml_string)
+        shape, dtype = raw_io.parse_metadata_from_ome(xml_string)
 
         # Generate timestamps if requested
         timestamps = None
