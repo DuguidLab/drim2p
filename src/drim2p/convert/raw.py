@@ -32,6 +32,34 @@ _logger = logging.getLogger(__name__)
     ),
 )
 @click.option(
+    "--ini-path",
+    required=False,
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        path_type=pathlib.Path,
+    ),
+    help=(
+        "Path to the INI file containing metadata about SOURCE. "
+        "This is ignored if SOURCE is a directory."
+    ),
+)
+@click.option(
+    "--xml-path",
+    required=False,
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        path_type=pathlib.Path,
+    ),
+    help=(
+        "Path to the OME-XML file containing metadata about SOURCE. "
+        "This is ignored if SOURCE is a directory."
+    ),
+)
+@click.option(
     "-o",
     "--out",
     required=False,
@@ -118,11 +146,11 @@ def convert_raw_command(**kwargs: Any) -> None:
     Note that SOURCE can be either a single file or a directory. If it is a directory,
     all the RAW files it contains will be converted.
 
-    The metadata is expected to exist alongside the RAW file(s). The INI file should
-    have the same name with only the extension changed to `.ini`. The OME-XML file is
-    optional if the INI metadata contains a string of it. Otherwise, the OME-XML file
-    should have the same name except for `_XYT` replaced with `_OME` and the extension
-    changed to `.xml`.
+    If '--ini-path' is not provided, it will default to the same path as the source file
+    with the extension changed to '.ini'.
+    If '--xml-path' is not provided, it will default to the same path as the source file
+    with the extension changed to '.xml', and the 'XYT' ending changed to 'OME'. Note
+    the OME-XML path is optional if the INI file contains the OME-XML as an entry.
 
     If `generate_timestamps` is set, a `.notes.txt` file with the same name as the RAW
     file should also be present.
@@ -132,6 +160,8 @@ def convert_raw_command(**kwargs: Any) -> None:
 
 def convert_raw(
     source: pathlib.Path | None = None,
+    ini_path: pathlib.Path | None = None,
+    xml_path: pathlib.Path | None = None,
     out: pathlib.Path | None = None,
     recursive: bool = False,
     include: str | None = None,
@@ -147,11 +177,11 @@ def convert_raw(
     Note that SOURCE can be either a single file or a directory. If it is a directory,
     all the RAW files it contains will be converted.
 
-    The metadata is expected to exist alongside the RAW file(s). The INI file should
-    have the same name with only the extension changed to `.ini`. The OME-XML file is
-    optional if the INI metadata contains a string of it. Otherwise, the OME-XML file
-    should have the same name except for `_XYT` replaced with `_OME` and the extension
-    changed to `.xml`.
+    If '--ini-path' is not provided, it will default to the same path as the source file
+    with the extension changed to '.ini'.
+    If '--xml-path' is not provided, it will default to the same path as the source file
+    with the extension changed to '.xml', and the 'XYT' ending changed to 'OME'. Note
+    the OME-XML path is optional if the INI file contains the OME-XML as an entry.
 
     If `generate_timestamps` is set, a `.notes.txt` file with the same name as the RAW
     file should also be present.
@@ -160,6 +190,12 @@ def convert_raw(
         source (pathlib.Path | None, optional):
             Source file or directory to convert. If a directory, the default is to look
             for RAW files inside of it without recursion.
+        ini_path (pathlib.Path | None, optional):
+            Path to the INI file containing metadata about SOURCE. This is ignored if
+            SOURCE is a directory.
+        xml_path (pathlib.Path | None, optional):
+            Path to the XML file containing metadata about SOURCE. This is ignored if
+            SOURCE is a directory.
         out (pathlib.Path | None, optional):
             Optional output directory for converted files.
         recursive (bool, optional):
@@ -230,7 +266,7 @@ def convert_raw(
         _logger.debug(f"Converting '{path}'.")
 
         # Retrieve INI metadata
-        ini_metadata_path = path.with_suffix(".ini")
+        ini_metadata_path = ini_path or path.with_suffix(".ini")
         if not ini_metadata_path.exists():
             _logger.error(
                 f"Failed to retrieve INI metadata for '{path}', skipping file. "
@@ -253,7 +289,7 @@ def convert_raw(
                 "Failed to retrieve XML metadata from INI file. Trying to use the XML "
                 "file directly."
             )
-            xml_metadata_path = path.with_stem(
+            xml_metadata_path = xml_path or path.with_stem(
                 path.stem.replace("XYT", "OME")
             ).with_suffix(".xml")
             if not xml_metadata_path.exists():
