@@ -3,8 +3,15 @@
 # SPDX-License-Identifier: MIT
 
 from collections.abc import Iterable
+import logging
 import pathlib
 import re
+from typing import Any
+
+import h5py
+import numpy as np
+
+_logger = logging.getLogger(__name__)
 
 
 def collect_paths_from_extensions(
@@ -142,6 +149,31 @@ def filter_paths(
                     filtered.append(path)
 
     return filtered
+
+
+def read_rois_and_shapes(
+    root: h5py.Group,
+) -> tuple[list[np.ndarray[Any, np.dtype[np.number]]], list[str]]:
+    rois = []
+    roi_shape_types = []
+    roi_group = root.get("ROIs")
+    if roi_group is None:
+        _logger.debug("No ROIs found.")
+    else:
+        _logger.debug("Found existing ROIs.")
+        rois = [roi[:] for name, roi in roi_group.items() if name != "roi_shape_types"]
+
+        roi_shape_types = roi_group.get("roi_shape_types")
+        if roi_shape_types is None:
+            _logger.error(
+                "Failed to retrieve ROIs shape types. Assuming all rectangles."
+            )
+            roi_shape_types = ["rectangle"] * len(rois)
+        else:
+            # h5py returns the values as a NumPy array of bytes
+            roi_shape_types = roi_shape_types[:].astype(str).tolist()
+
+    return rois, roi_shape_types
 
 
 def split_string(string: str, separator: str = ";") -> list[str]:

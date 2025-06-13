@@ -28,8 +28,10 @@ classifiers = [
 ]
 dependencies = [
   "click",
+  "dask",
   "duguidlab-motion-correction",
   "h5py",
+  "napari[all]",
   "numpy",
   "ome-types[lxml]",
   "pydantic",
@@ -74,8 +76,14 @@ pretty = true
 allow_redefinition = true
 warn_unreachable = true
 show_error_code_links = true
+untyped_calls_exclude = [
+  "dask.array"
+]
 [[tool.mypy.overrides]]
 module = ["h5py.*"]
+ignore_missing_imports = true
+[[tool.mypy.overrides]]
+module = ["napari.*"]
 ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["sima.*"]
