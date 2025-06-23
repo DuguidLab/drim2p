@@ -10,7 +10,6 @@ from typing import Any
 import warnings
 
 import numpy as np
-import ome_types
 
 from drim2p import models
 
@@ -31,6 +30,9 @@ def parse_metadata_from_ome(
         A tuple of the (`shape`, `dtype``) of the RAW file, where `shape` is the shape
         in ZYX order, and `dtype` is the numpy data type with the correct byte order.
     """
+    # Lazy import as this adds about a second to a NO-OP run of the CLI on my machine
+    import ome_types
+
     # Silence `UserWarning`s for potentially invalid IDs that are automatically cast
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=UserWarning)
