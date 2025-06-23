@@ -32,8 +32,9 @@ def collect_paths_from_extensions(
         recursive (bool, optional):
             Whether to recursively visit directories when searching.
         strict (bool, optional):
-            Whether to force checked files to only have a single suffix. By default, the
-            checked extensions can appear anywhere in the suffix list of files.
+            Whether to force checked files to have extensions as their final extension.
+            By default, the checked extensions can appear anywhere in the suffix list of
+            files.
 
     Returns:
         A list of the matched pats.
