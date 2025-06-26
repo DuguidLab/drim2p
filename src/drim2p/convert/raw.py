@@ -311,6 +311,8 @@ def convert_raw(
             dataset = handle.create_dataset(
                 "data",
                 data=array,
+                # Chunk per frame, same for writing but speeds up reading a lot
+                chunks=(1, *shape[1:]),
                 compression=compression,
                 compression_opts=compression_opts,
             )
