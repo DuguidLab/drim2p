@@ -199,14 +199,7 @@ def convert_raw(
         return
 
     # Collect RAW file paths to convert
-    _logger.debug("Collecting RAW paths.")
-    raw_paths = [source]
-    if source.is_dir():
-        raw_paths = io.collect_paths_from_extensions(
-            source, [".raw"], recursive, strict=True
-        )
-    raw_paths = io.filter_paths(raw_paths, include, exclude)
-    _logger.debug(f"{len(raw_paths)} path(s) collected.")
+    raw_paths = io.find_paths(source, [".raw"], include, exclude, recursive, True)
 
     # If we are going to process at least a file, ensure the output directory exists
     if len(raw_paths) > 0 and out is not None:

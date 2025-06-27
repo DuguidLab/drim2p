@@ -133,20 +133,10 @@ def apply_motion_correction(
         _logger.error("Please provide a settings file.")
         return
 
-    # Collect HDF5 file paths to correct
-    _logger.debug("Collecting HDF5 paths.")
-    hdf5_paths = [source]
-    if source.is_dir():
-        hdf5_paths = io.collect_paths_from_extensions(
-            source, [".h5"], recursive, strict=True
-        )
-    hdf5_paths = io.filter_paths(hdf5_paths, include, exclude)
-    _logger.debug(f"{len(hdf5_paths)} path(s) collected.")
-
     # Load the settings
     settings = models.MotionConfig.from_file(settings_path)
 
-    for path in hdf5_paths:
+    for path in io.find_paths(source, [".h5"], include, exclude, recursive, True):
         _logger.debug(f"Motion correcting '{path}'.")
 
         _apply_motion_correction(path, settings, force)

@@ -166,16 +166,6 @@ def draw_roi(
     if source is None:
         return
 
-    # Collect HDF5 file paths to convert
-    _logger.debug("Collecting HDF5 paths.")
-    paths = [source]
-    if source.is_dir():
-        paths = io.collect_paths_from_extensions(
-            source, [".h5"], recursive, strict=True
-        )
-    paths = io.filter_paths(paths, include, exclude)
-    _logger.debug(f"{len(paths)} path(s) collected.")
-
     # Load template ROIs
     template_rois: list[np.ndarray[Any, np.dtype[np.number]]] = []
     template_roi_shape_types: list[str] = []
@@ -196,7 +186,7 @@ def draw_roi(
                 )
                 return
 
-    for path in paths:
+    for path in io.find_paths(source, [".h5"], include, exclude, recursive, True):
         _logger.info(f"Opening '{path}'.")
         with h5py.File(path) as handle:
             # Load the motion-corrected dataset

@@ -151,6 +151,53 @@ def filter_paths(
     return filtered
 
 
+def find_paths(
+    root: pathlib.Path,
+    extensions: Iterable[str],
+    include: str | None = None,
+    exclude: str | None = None,
+    recursive: bool = False,
+    strict: bool = False,
+) -> list[pathlib.Path]:
+    """Collects and filters paths found in a directory.
+
+    Args:
+        root (pathlib.Path):
+            Path to the root path. If this is a file, it is the only file filtered. If
+            it is a directory, files are collected then filtered from it. If 'recursive'
+            is set, it is traversed recursively.
+        extensions (Iterable[str]):
+            Extensions to check against. By default, any file that contains one of these
+            in its suffixes will be matched. See `strict` for a different behaviour.
+        include (str | None, optional):
+            String of the include filters separated by `separator`.
+        exclude (str | None, optional):
+            String of the exclude filters separated by `separator`.
+        recursive (bool, optional):
+            Whether to recursively visit directories when searching.
+        strict (bool, optional):
+            Whether to force checked files to only have a single suffix. By default, the
+            checked extensions can appear anywhere in the suffix list of files.
+
+    Returns:
+        A list of the paths collected and after filtering.
+    """
+    _logger.debug(
+        f"Collecting files (extensions: {', '.join(extensions)} - include: {include} - "
+        f"exclude: {exclude})."
+    )
+
+    paths = [root]
+    if root.is_dir():
+        paths = collect_paths_from_extensions(root, extensions, recursive, strict)
+
+    paths = filter_paths(paths, include, exclude)
+
+    _logger.debug(f"Collected {len(paths)} paths.")
+
+    return paths
+
+
 def read_rois_and_shapes(
     root: h5py.Group,
 ) -> tuple[list[np.ndarray[Any, np.dtype[np.number]]], list[str]]:
