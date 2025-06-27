@@ -198,6 +198,33 @@ def find_paths(
     return paths
 
 
+def group_paths_by_regex(
+    paths: list[pathlib.Path], group_by_regex: str
+) -> list[list[pathlib.Path]]:
+    """Groups paths based on the match of `group_by_regex` against their stems.
+
+    Paths that do not contain the regex are put in their own size 1 group.
+
+    Args:
+        paths (list[pathlib.Path]): Paths to group.
+        group_by_regex (str): Regex to use when matching.
+
+    Returns:
+        A list of path groups. Groups are guaranteed to have at least one element.
+    """
+    matches = [re.findall(group_by_regex, path.stem) for path in paths]
+    groups: dict[str, list[pathlib.Path]] = {}
+    for match, path in zip(matches, paths):
+        if len(match) == 0:
+            # If no matches found, default to a group of size 1 with the current path
+            match.append(path.stem)
+        match = match[0]
+
+        groups[match] = groups.get(match, []) + [path]
+
+    return list(groups.values())
+
+
 def read_rois_and_shapes(
     root: h5py.Group,
 ) -> tuple[list[np.ndarray[Any, np.dtype[np.number]]], list[str]]:
