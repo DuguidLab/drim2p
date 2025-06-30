@@ -80,13 +80,12 @@ untyped_calls_exclude = [
   "dask.array"
 ]
 [[tool.mypy.overrides]]
-module = ["h5py.*"]
-ignore_missing_imports = true
-[[tool.mypy.overrides]]
-module = ["napari.*"]
-ignore_missing_imports = true
-[[tool.mypy.overrides]]
-module = ["sima.*"]
+module = [
+  "h5py.*",
+  "fissa.*",
+  "napari.*",
+  "sima.*",
+]
 ignore_missing_imports = true
 
 # `coverage` config
