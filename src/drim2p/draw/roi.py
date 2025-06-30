@@ -230,7 +230,7 @@ def draw_roi(
                 _logger.debug("Persisting arrays into memory.")
                 array = array.persist()
                 grouped = grouped.persist()
-                projected = da.max(array, axis=0).persist()
+                projected = da.max(grouped, axis=0).persist()
 
             # Retrieve ROIs if they exist
             rois: list[np.ndarray[Any, np.dtype[np.number]]] = []
