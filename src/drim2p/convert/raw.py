@@ -13,7 +13,7 @@ import click
 import h5py
 import numpy as np
 
-from drim2p import io, models
+from drim2p import cli_utils, io, models
 from drim2p.io import raw as raw_io
 
 _logger = logging.getLogger(__name__)
@@ -30,6 +30,7 @@ _logger = logging.getLogger(__name__)
         readable=True,
         path_type=pathlib.Path,
     ),
+    callback=cli_utils.noop_if_missing,
 )
 @click.option(
     "--ini-path",
@@ -141,7 +142,7 @@ def convert_raw_command(**kwargs: Any) -> None:
 
 
 def convert_raw(
-    source: pathlib.Path | None = None,
+    source: pathlib.Path,
     ini_path: pathlib.Path | None = None,
     xml_path: pathlib.Path | None = None,
     out: pathlib.Path | None = None,
@@ -167,7 +168,7 @@ def convert_raw(
     file should also be present.
 
     Args:
-        source (pathlib.Path | None, optional):
+        source (pathlib.Path):
             Source file or directory to convert. If a directory, the default is to look
             for RAW files inside of it without recursion.
         ini_path (pathlib.Path | None, optional):
@@ -193,11 +194,6 @@ def convert_raw(
             ".notes.txt" file should be present along the RAW file when this is set.
         force (bool, optional): Whether to overwrite output files if they exist.
     """
-    # Follow `click` recommended best-practice and NO-OP if no source is given.
-    # See https://github.com/pallets/click/blob/2d610e36a429bfebf0adb0ca90cdc0585f296369/docs/arguments.rst?plain=1#L43
-    if source is None:
-        return
-
     # Collect RAW file paths to convert
     raw_paths = io.find_paths(source, [".raw"], include, exclude, recursive, True)
 

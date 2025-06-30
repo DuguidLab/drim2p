@@ -6,7 +6,7 @@ import click
 import fissa
 import h5py
 
-from drim2p import io
+from drim2p import cli_utils, io
 
 _logger = logging.getLogger(__name__)
 
@@ -22,6 +22,7 @@ _logger = logging.getLogger(__name__)
         readable=True,
         path_type=pathlib.Path,
     ),
+    callback=cli_utils.noop_if_missing,
 )
 @click.option(
     "--group-by-regex",
@@ -98,11 +99,11 @@ def extract_signal_command(**kwargs: Any) -> None:
     expression. If you wish to group all files together, pass an empty string as the
     regular expression.
     """
-    extract_signal(kwargs.pop("source"), **kwargs)
+    extract_signal(**kwargs)
 
 
 def extract_signal(
-    source: pathlib.Path | None,
+    source: pathlib.Path,
     group_by_regex: str | None = None,
     dataset_name: str = "imaging",
     recursive: bool = False,
@@ -122,7 +123,7 @@ def extract_signal(
     regular expression.
 
     Args:
-        source (pathlib.Path | None, optional):
+        source (pathlib.Path):
             Source file or directory to preprocess. If a directory, the default is to
             look for HDF5 files inside of it without recursion.
         group_by_regex (str, optional):

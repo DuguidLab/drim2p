@@ -13,7 +13,7 @@ import h5py
 import numpy as np
 import sima
 
-from drim2p import io, models
+from drim2p import cli_utils, io, models
 
 _logger = logging.getLogger(__name__)
 
@@ -29,6 +29,7 @@ _logger = logging.getLogger(__name__)
         readable=True,
         path_type=pathlib.Path,
     ),
+    callback=cli_utils.noop_if_missing,
 )
 @click.option(
     "-s",
@@ -92,7 +93,7 @@ def apply_motion_correction_command(**kwargs: Any) -> None:
 
 
 def apply_motion_correction(
-    source: pathlib.Path | None = None,
+    source: pathlib.Path,
     settings_path: pathlib.Path | None = None,
     recursive: bool = False,
     include: str | None = None,
@@ -107,7 +108,7 @@ def apply_motion_correction(
     such as the strategy to use or the maximum displacement allowed.
 
     Args:
-        source (pathlib.Path | None, optional):
+        source (pathlib.Path):
             Source file or directory to convert. If a directory, the default is to look
             for HDF5 (.h5) files inside of it without recursion.
         settings_path (pathlib.Path | None, optional):
@@ -125,11 +126,7 @@ def apply_motion_correction(
             of exclude filters. This is ignored if no include filters are provided.
         force (bool, optional): Whether to ovewrite output datasets if they exist.
     """
-    # Follow `click` recommended best-practice and NO-OP if no source is given.
-    # See https://github.com/pallets/click/blob/2d610e36a429bfebf0adb0ca90cdc0585f296369/docs/arguments.rst?plain=1#L43
-    if source is None:
-        return
-    elif settings_path is None:
+    if settings_path is None:
         _logger.error("Please provide a settings file.")
         return
 
