@@ -237,7 +237,8 @@ Processing time: {time_string}\
                 shape=shape[0:1] + shape[2:4],
                 dtype=frame.dtype,
                 chunks=(1,) + shape[2:4],
-                compression="gzip",
+                compression="lzf",
+                shuffle=True,
             )
         file_dataset[i] = frame.squeeze()
 
