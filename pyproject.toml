@@ -29,7 +29,8 @@ classifiers = [
 dependencies = [
   "click",
   "dask",
-  "duguidlab-motion-correction",
+  "duguidlab-motion-correction",  # SIMA fork
+  "duguidlab-signal-separation",  # FISSA fork
   "h5py",
   "napari[all]",
   "numpy",
