@@ -213,23 +213,22 @@ def draw_roi(
                 dataset, chunks=(projection_window, *dataset.shape[1:])
             )
             # Make maximum intensity grouped projections every projection_window frames
-            grouped: da.Array = da.array(
-                [
-                    da.max(
-                        array[i * projection_window : (i + 1) * projection_window],
-                        axis=0,
-                        keepdims=True,
-                    )
-                    for i in range(array.shape[0] // projection_window)
-                ]
-            )
+            grouped: da.Array = array.map_blocks(
+                lambda x: da.max(x, axis=0, keepdims=True),  # type: ignore[arg-type]
+                chunks=(1, *dataset.shape[1:]),
+            )  # type: ignore[call-arg]
 
             # Make complete projection
             projected: da.Array | None = None
             if not lazy:
                 _logger.debug("Persisting arrays into memory.")
                 array = array.persist()
-                grouped = grouped.persist()
+                # Redefining grouped is about twice a fast as simply persisting it if
+                # array was also persisted before it. Not exactly sure why.
+                grouped = array.map_blocks(
+                    lambda x: da.max(x, axis=0, keepdims=True),  # type: ignore[arg-type]
+                    chunks=(1, *dataset.shape[1:]),
+                ).persist()  # type: ignore[call-arg]
                 projected = da.max(grouped, axis=0).persist()
 
             # Retrieve ROIs if they exist
