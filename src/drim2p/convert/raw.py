@@ -111,15 +111,6 @@ _logger = logging.getLogger(__name__)
     help="Whether to disable compression for the output HDF5 files.",
 )
 @click.option(
-    "--aggression",
-    required=False,
-    type=click.IntRange(0, 9),
-    help=(
-        "Aggression level to use for GZIP compression. Lower means faster/worse "
-        "compression, higher means slower/better compression."
-    ),
-)
-@click.option(
     "--generate-timestamps",
     required=False,
     is_flag=True,
@@ -158,7 +149,6 @@ def convert_raw(
     include: str | None = None,
     exclude: str | None = None,
     no_compression: bool = False,
-    aggression: int = 4,
     generate_timestamps: bool = False,
     force: bool = False,
 ) -> None:
@@ -198,10 +188,6 @@ def convert_raw(
             regular-expressions. Exclude filters are applied after all include filters.
         no_compression (bool, optional):
             Whether to disable compression for the output HDF5 files.
-        aggression (int, optional):
-            Aggression level to use for GZIP compression. Lower means faster/worse
-            compression, higher means slower/better compression. This should be in the
-            range 0 <= value <= 9.
         generate_timestamps (bool, optional):
             Whether to generate timestamps from the notes entries of the RAW files. A
             ".notes.txt" file should be present along the RAW file when this is set.
@@ -305,14 +291,15 @@ def convert_raw(
 
         # Output as HDF5
         _logger.debug(f"Writing to HDF5 ({out_path}).")
-        compression = None if no_compression else "gzip"
-        compression_opts = None if no_compression else aggression
+        compression = None if no_compression else "lzf"
         with h5py.File(out_path, "w") as handle:
             dataset = handle.create_dataset(
                 "data",
                 data=array,
+                # Chunk per frame, same for writing but speeds up reading a lot
+                chunks=(1, *shape[1:]),
                 compression=compression,
-                compression_opts=compression_opts,
+                shuffle=True,
             )
 
             for key, value in ini_metadata.items():
@@ -323,7 +310,7 @@ def convert_raw(
                     "timestamps",
                     data=timestamps,
                     compression=compression,
-                    compression_opts=compression_opts,
+                    shuffle=True,
                 )
 
 

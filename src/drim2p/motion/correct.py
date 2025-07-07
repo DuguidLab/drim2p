@@ -219,8 +219,29 @@ Processing time: {time_string}\
     if "imaging" in list(file):  # Remote corrected dataset if it exists
         _logger.debug(f"Removing existing 'imaging' dataset from '{path}'.")
         del file["imaging"]
+
     _logger.debug(f"Saving 'imaging' dataset to '{path}'.")
-    dataset.export_frames([path], fmt="HDF5", compression="gzip")
+    # Manually save the motion-corrected sequence instead of using dataset.export_frames
+    # to avoid extra dimensions, and because we're a bit faster when working with larger
+    # files.
+    sequence = dataset.sequences[0]
+    shape = sequence.shape
+    file_dataset = None
+    for i, frame in enumerate(iter(sequence)):
+        if file_dataset is None:
+            # Delay creation so we can get the frame datatype. We could use
+            # dataset._dataset.dtype but that only works for HDF5 datasets and might
+            # as well not lock ourselves into that.
+            file_dataset = file.create_dataset(
+                "imaging",
+                shape=shape[0:1] + shape[2:4],
+                dtype=frame.dtype,
+                chunks=(1,) + shape[2:4],
+                compression="lzf",
+                shuffle=True,
+            )
+        file_dataset[i] = frame.squeeze()
+
     _logger.debug("Saving displacements.")
     np.savez_compressed(
         path.with_stem(path.stem + "_displacements").with_suffix(".npz"),
