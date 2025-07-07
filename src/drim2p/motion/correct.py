@@ -189,8 +189,13 @@ def _apply_motion_correction(
     )
     start_time = time.perf_counter()
 
-    # Where sima puts dataset information during motion correction
-    temp_sima_dataset_path = path.parent / f".{path.stem}.sima"
+    # Where sima puts dataset information during motion correction.
+    # SIMA uses 'os.makedirs' without 'exist_ok' so we need to make sure there isn't
+    # a cache already (e.g., something prevented a previous run from completing).
+    temp_sima_dataset_path = path.parent / f".{path.with_suffix('.sima').name}"
+    if temp_sima_dataset_path.exists():
+        _logger.debug("Deleting existing SIMA folder.")
+        shutil.rmtree(temp_sima_dataset_path)
 
     # Create a `Sequence` object from the HDF5 file that sima understands
     sequences = [sima.Sequence.create("HDF5", path, key="data", dim_order="tyx")]
