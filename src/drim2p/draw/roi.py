@@ -12,7 +12,7 @@ import h5py
 import napari
 import numpy as np
 
-from drim2p import io
+from drim2p import cli_utils, io
 
 _logger = logging.getLogger(__name__)
 
@@ -28,6 +28,7 @@ _logger = logging.getLogger(__name__)
         readable=True,
         path_type=pathlib.Path,
     ),
+    callback=cli_utils.noop_if_missing,
 )
 @click.option(
     "-t",
@@ -117,7 +118,7 @@ def draw_roi_command(**kwargs: Any) -> None:
 
 
 def draw_roi(
-    source: pathlib.Path | None = None,
+    source: pathlib.Path,
     template: pathlib.Path | None = None,
     dataset_name: str = "imaging",
     projection_window: int = 10,
@@ -133,7 +134,7 @@ def draw_roi(
     all the HDF5 files it contains will be queued for ROI drawing.
 
     Args:
-        source (pathlib.Path | None, optional):
+        source (pathlib.Path):
             Source file or directory to convert. If a directory, the default is to look
             for HDF5 files inside of it without recursion.
         template (pathlib.Path | None, optional):
@@ -161,21 +162,6 @@ def draw_roi(
             appended. Be careful when using this option as it will lead to all ROIs
             being deleted when opening a file.
     """
-    # Follow `click` recommended best-practice and NO-OP if no source is given.
-    # See https://github.com/pallets/click/blob/2d610e36a429bfebf0adb0ca90cdc0585f296369/docs/arguments.rst?plain=1#L43
-    if source is None:
-        return
-
-    # Collect HDF5 file paths to convert
-    _logger.debug("Collecting HDF5 paths.")
-    paths = [source]
-    if source.is_dir():
-        paths = io.collect_paths_from_extensions(
-            source, [".h5"], recursive, strict=True
-        )
-    paths = io.filter_paths(paths, include, exclude)
-    _logger.debug(f"{len(paths)} path(s) collected.")
-
     # Load template ROIs
     template_rois: list[np.ndarray[Any, np.dtype[np.number]]] = []
     template_roi_shape_types: list[str] = []
@@ -196,7 +182,7 @@ def draw_roi(
                 )
                 return
 
-    for path in paths:
+    for path in io.find_paths(source, [".h5"], include, exclude, recursive, True):
         _logger.info(f"Opening '{path}'.")
         with h5py.File(path) as handle:
             # Load the motion-corrected dataset

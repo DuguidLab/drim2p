@@ -151,6 +151,80 @@ def filter_paths(
     return filtered
 
 
+def find_paths(
+    root: pathlib.Path,
+    extensions: Iterable[str],
+    include: str | None = None,
+    exclude: str | None = None,
+    recursive: bool = False,
+    strict: bool = False,
+) -> list[pathlib.Path]:
+    """Collects and filters paths found in a directory.
+
+    Args:
+        root (pathlib.Path):
+            Path to the root path. If this is a file, it is the only file filtered. If
+            it is a directory, files are collected then filtered from it. If 'recursive'
+            is set, it is traversed recursively.
+        extensions (Iterable[str]):
+            Extensions to check against. By default, any file that contains one of these
+            in its suffixes will be matched. See `strict` for a different behaviour.
+        include (str | None, optional):
+            String of the include filters separated by `separator`.
+        exclude (str | None, optional):
+            String of the exclude filters separated by `separator`.
+        recursive (bool, optional):
+            Whether to recursively visit directories when searching.
+        strict (bool, optional):
+            Whether to force checked files to only have a single suffix. By default, the
+            checked extensions can appear anywhere in the suffix list of files.
+
+    Returns:
+        A list of the paths collected and after filtering.
+    """
+    _logger.debug(
+        f"Collecting files (extensions: {', '.join(extensions)} - include: {include} - "
+        f"exclude: {exclude})."
+    )
+
+    paths = [root]
+    if root.is_dir():
+        paths = collect_paths_from_extensions(root, extensions, recursive, strict)
+
+    paths = filter_paths(paths, include, exclude)
+
+    _logger.debug(f"Collected {len(paths)} paths.")
+
+    return paths
+
+
+def group_paths_by_regex(
+    paths: list[pathlib.Path], group_by_regex: str
+) -> list[list[pathlib.Path]]:
+    """Groups paths based on the match of `group_by_regex` against their stems.
+
+    Paths that do not contain the regex are put in their own size 1 group.
+
+    Args:
+        paths (list[pathlib.Path]): Paths to group.
+        group_by_regex (str): Regex to use when matching.
+
+    Returns:
+        A list of path groups. Groups are guaranteed to have at least one element.
+    """
+    matches = [re.findall(group_by_regex, path.stem) for path in paths]
+    groups: dict[str, list[pathlib.Path]] = {}
+    for match, path in zip(matches, paths):
+        if len(match) == 0:
+            # If no matches found, default to a group of size 1 with the current path
+            match.append(path.stem)
+        match = match[0]
+
+        groups[match] = groups.get(match, []) + [path]
+
+    return list(groups.values())
+
+
 def read_rois_and_shapes(
     root: h5py.Group,
 ) -> tuple[list[np.ndarray[Any, np.dtype[np.number]]], list[str]]:
