@@ -7,7 +7,7 @@ import sys
 
 import click
 
-from drim2p import convert, deltaf, draw, extract, logging_, motion
+from drim2p import convert, deltaf, draw, extract, logs, motion
 
 _logger = logging.getLogger("drim2p")
 
@@ -51,7 +51,7 @@ def set_up_logging(level: int, no_colour: bool) -> None:
             datefmt="%Y-%m-%d %H:%M:%S",
         )
     else:
-        _formatter = logging_.ColourFormatter()
+        _formatter = logs.ColourFormatter()
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(_formatter)
