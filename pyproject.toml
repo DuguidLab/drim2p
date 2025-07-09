@@ -69,6 +69,22 @@ run-coverage = "pytest --cov=src/drim2p --cov-report=term-missing:skip-covered -
 run-coverage-browser = "run-coverage ; open htmlcov/index.html"
 run = "run-coverage --no-cov"
 
+[tool.hatch.envs.docs]
+dependencies = [
+  "griffe-pydantic",
+  "mkdocs",
+  "mkdocs-caption",
+  "mkdocs-click",
+  "mkdocs-gen-files",
+  "mkdocs-literate-nav",
+  "mkdocs-material",
+  "mkdocs-section-index",
+  "mkdocstrings-python",
+]
+[tool.hatch.envs.docs.scripts]
+build = "mkdocs build --clean --strict"
+serve = "mkdocs serve --dev-addr localhost:8888"
+
 # `mypy` config
 [tool.mypy]
 strict = true
