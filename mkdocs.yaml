@@ -1,0 +1,67 @@
+site_name: drim2p
+repo_url: https://github.com/Duguidlab/drim2p
+repo_name: DuguidLab/drim2p
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.path
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+  font:
+    text: Montserrat
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      primary: deep-orange
+      accent: purple
+      toggle:
+        icon: material/moon-waxing-crescent
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep-orange
+      accent: purple
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+extra_css:
+  - css/icons.css
+
+plugins:
+  - caption:
+      figure:
+        ignore_alt: True
+  - gen-files:
+      scripts:
+        - scripts/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            extensions:
+              - griffe_pydantic:
+  - search
+  - section-index
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - mkdocs-click
+
+copyright:
+  Copyright &copy; 2025 Olivier Delrée, Constantinos Eleftheriou, Sophie Holland, Michelle Sanchez
+
+nav:
+  - Getting started:
+      - Installation: index.md
