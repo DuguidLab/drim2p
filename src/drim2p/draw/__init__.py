@@ -12,4 +12,4 @@ def draw() -> None:
     """Allows for drawing ROIs on HDF5 dataset."""
 
 
-draw.add_command(draw_roi.draw_roi_command, "roi")
+draw.add_command(draw_roi.draw_roi_command)

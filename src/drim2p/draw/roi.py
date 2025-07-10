@@ -17,7 +17,7 @@ from drim2p import cli_utils, io
 _logger = logging.getLogger(__name__)
 
 
-@click.command()
+@click.command("roi")
 @click.argument(
     "source",
     required=False,

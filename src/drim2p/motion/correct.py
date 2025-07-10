@@ -18,7 +18,7 @@ from drim2p import cli_utils, io, models
 _logger = logging.getLogger(__name__)
 
 
-@click.command
+@click.command("correct")
 @click.argument(
     "source",
     required=False,

@@ -12,4 +12,4 @@ def motion() -> None:
     """Handles motion correction."""
 
 
-motion.add_command(correct.apply_motion_correction_command, "correct")
+motion.add_command(correct.apply_motion_correction_command)
