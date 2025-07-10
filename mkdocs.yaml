@@ -65,3 +65,6 @@ copyright:
 nav:
   - Getting started:
       - Installation: index.md
+  - Reference:
+      - CLI: reference/index.md
+      - API: reference/API/
