@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import itertools
 import logging
 import os
 import pathlib
@@ -210,6 +211,11 @@ def convert_raw(
             return
         os.makedirs(out, exist_ok=True)
 
+    # Ignore ini_path and xml_path if we are working with a directory
+    if source.is_dir():
+        ini_path = None
+        xml_path = None
+
     for path in raw_paths:
         # Shortcircuit early if we won't write
         out_path = (
@@ -223,49 +229,47 @@ def convert_raw(
             )
             continue
 
-        _logger.debug(f"Converting '{path}'.")
+        _logger.info(f"Converting '{path}'.")
 
         # Retrieve INI metadata
         ini_metadata_path = ini_path or path.with_suffix(".ini")
-        if not ini_metadata_path.exists():
-            _logger.error(
-                f"Failed to retrieve INI metadata for '{path}', skipping file. "
-                f"Make sure it has the same file name as the RAW file "
-                f"and it only has the '.ini' extension.",
-            )
-            continue
-        try:
-            ini_metadata = raw_io.parse_metadata_from_ini(ini_metadata_path, typed=True)
-        except ValueError as e:
-            _logger.warning(
-                f"Failed to parse INI metadata for '{ini_metadata_path}': \n{e}."
-            )
-            continue
+        ini_metadata = {}
+        if ini_metadata_path.exists():
+            try:
+                ini_metadata = raw_io.parse_metadata_from_ini(
+                    ini_metadata_path, typed=True
+                )
+            except ValueError as e:
+                _logger.warning(e)
+        else:
+            _logger.debug(f"No INI metadata found for '{path}'.")
 
         # Retrieve XML metadata
-        xml_string = ini_metadata.get("ome.xml.string")
+        xml_string = None
+        if ini_metadata:
+            xml_string = ini_metadata.get("ome.xml.string")
+            if xml_string is None:
+                _logger.debug(
+                    "Failed to retrieve XML metadata from INI metadata. Trying to use "
+                    "the XML file directly."
+                )
+            else:
+                _logger.debug("Using XML string from INI file.")
+
         if xml_string is None:
-            _logger.debug(
-                "Failed to retrieve XML metadata from INI file. Trying to use the XML "
-                "file directly."
-            )
-            xml_metadata_path = xml_path or path.with_stem(
-                path.stem.replace("XYT", "OME")
-            ).with_suffix(".xml")
-            if not xml_metadata_path.exists():
+            xml_metadata_path = xml_path or _find_xml_path(path)
+            if xml_metadata_path is None or not xml_metadata_path.exists():
+                _logger.debug(f"No XML metadata found for '{path}'.")
                 _logger.error(
                     f"Failed to retrieve OME-XML metadata from INI file or directly "
-                    f"through XML file for '{path}', skipping file. "
+                    f"through XML file for '{path}', skipping RAW file. "
                     f"To use the XML file, make sure it has the same file name as the "
-                    f"RAW file with XYT replaced with OME, and it only has the '.xml' "
-                    f"extension."
+                    f"RAW file with the '.xml' or '.ome.xml' extension(s)."
                 )
                 continue
-            else:
-                _logger.debug("Using XML string from XML file.")
-                xml_string = xml_metadata_path.open().read()
-        else:
-            _logger.debug("Using XML string from INI file.")
+
+            _logger.debug("Using XML string from XML file.")
+            xml_string = xml_metadata_path.open().read()
 
         shape, dtype = raw_io.parse_metadata_from_ome(xml_string)
 
@@ -363,3 +367,14 @@ def generate_timestamps_for_note_entry(
     frame_spacing = delta / frame_count
 
     return np.array([i * frame_spacing for i in range(frame_count)])
+
+
+def _find_xml_path(path: pathlib.Path) -> pathlib.Path | None:
+    stems = [path.stem, path.stem.replace("XYT", "OME")]
+    suffixes = [".xml", ".ome.xml"]
+    for stem, suffix in itertools.product(stems, suffixes):
+        candidate_path = path.with_stem(stem).with_suffix(suffix)
+        if candidate_path.exists():
+            return candidate_path
+
+    return None
