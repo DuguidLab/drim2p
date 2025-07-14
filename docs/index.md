@@ -6,11 +6,11 @@
 
 `drim2p` is programmed in Python and you will need to have it installed on your machine. On all major platforms, it will be installed by default. But if you do not have it, follow the instructions available [here](https://www.python.org/downloads/).
 
-`drim2p` takes as input `.raw` files outputted from a 2-photon imaging scope (e.g., hyperscope). This is essentially all you will need to run the whole pipeline, except for a `settings.toml` file that is used for motion correction. You can find this extra file under `resources/motion_correction` in the repository.
+`drim2p` takes as input `.raw` files outputted from a 2-photon imaging scope (e.g., Hyperscope). This is essentially all you will need to run the whole pipeline, except for a `settings.toml` file that is used for motion correction. You can find this extra file under `resources/motion_correction` in the repository.
 
 No specific preprocessing is necessary in order to use the software. However, since `.raw` files are in fact raw binary, some metadata is required for the software to be able to read the files. This metadata can take the form of an `.ini` file or an `.ome.xml` file. If an `.ini` file is present, it needs to have an `ome.xml.string` entry which contains a valid OME-XML string.
 
-For more details, see the [data preparation](tutorials/data-preparation.md) documentation.
+For more details, see the [tutorials overview](tutorials/index.md) and the [tutorial on conversion](tutorials/conversion-to-hdf5.md).
 
 ## Installation as a command
 
@@ -114,4 +114,4 @@ For your first time working with the app, you should start by reading the [typic
 
 For more in-depth guides once you've got a good grip on the main capabilities of the application, see the [tutorials](tutorials/index.md) which guide you through the commands and in-depth explanations of what each step entails.
 
-For documentation of the `drim2p` API to use in your own project, see the [reference](../reference/API/drim2p/index.html) section.
+For documentation of the `drim2p` API to use in your own project, see the [reference](reference/API/drim2p/index.html) section.

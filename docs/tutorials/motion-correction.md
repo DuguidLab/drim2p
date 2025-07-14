@@ -16,7 +16,7 @@ tutorial/
 ├── imaging_file.ini
 ├── imaging_file.raw
 ├── imaging_file.xml
-└── settings.toml.base
+└── settings.toml.base  (NEW)
 ```
 
 ## Motion correcting
@@ -31,7 +31,7 @@ If all goes well, you will see some output along these lines:
 
 ```text
 Applying motion correction for 'imaging_file' using DiscreteFourier2D.
-Finished motion correction in 0h 0m 10.00s.
+Finished motion correction in 0h 1m 0.00s.
 Saved motion correction to file.
 ```
 
@@ -56,6 +56,15 @@ The `imaging_file_displacements.npz` file is a [compressed NumPy file](https://n
 ### Report
 
 The `imaging_file_motion_correction_report.txt` file is a plain text file containing basic information about what settings were used for the motion correction as well as information about how long it took and which file was corrected.
+
+For our example imaging file, it looks like this:
+
+```text
+Chunk: imaging_file             (name of the file processed)
+Strategy: Fourier               (name of the strategy used)
+Displacement: [50, 50]          (maximum X and Y displacements allowed)
+Processing time: 0h 1m 0.00s    (time taken to motion correction)
+```
 
 ## What's next?
 

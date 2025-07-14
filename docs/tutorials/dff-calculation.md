@@ -2,9 +2,9 @@
 
 There are multiple ways to compute F₀, using a percentile, the mean, the median, etc. By default, `drim2p` computes F₀ to be the 5th percentile of the fluorescence for the whole signal.
 
-It is also possible to use a rolling window to continually update the F₀ throughout the signal.
+It is also possible to use a rolling window to continually update the F₀ value throughout the signal.
 
-This tutorial focuses on the using the defaults (5th percentile with no rolling window). For a more in-depth guide to customising the computation, see the [how-to guide]() and the [CLI reference](../../reference/#drim2p-deltaf).
+This tutorial focuses on the using the defaults (5th percentile with no rolling window). For a more in-depth guide to customising the computation, see the [how-to guide]() and the [CLI reference](../reference/index.md#drim2p-deltaf).
 
 ## Calculating ΔF/F₀
 
@@ -20,3 +20,7 @@ If all goes well, you will see output along these lines (the computation should 
 Computing ΔF/F₀ for 'imaging_file.h5'.
 Saved ΔF/F₀.
 ```
+
+## What's next?
+
+The next step is to do [spike inference](spike-inference.md) on the ΔF/F₀ traces.

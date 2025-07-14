@@ -13,16 +13,16 @@ If all goes well, you will see something along these lines:
 ```text
 Extracting and decontaminating signal for 'imaging_file'.
 Extracting traces: 100%|██████████████████| 1/1 [00:00<00:00, 3548.48it/s]
-Finished extracting raw signals from 1 ROIs across 1 trials in 1 min, 5 sec.
+Finished extracting raw signals from 1 ROIs across 1 trials in 1 min, 0 sec.
 Separating data: 100%|██████████████████| 1/1 [00:00<00:00, 41.16it/s]
-Finished separating signals from 1 ROIs across 1 trials in 1 min, 5 sec
+Finished separating signals from 1 ROIs across 1 trials in 1 min, 0 sec
 Finished extracting signal.
 ```
 
 Once again, no extra file should be added to the directory, instead the extracted signals will be embedded into the HDF5 file.
 
-!!! Note
-    The extracted signals for each ROIs will have 5 signals. The first signal is the "true" signal, after decontamination while the other four are the neuropil signals estimated by FISSA.
+!!! note
+    The extracted signal arrays for each ROIs will have 5 signals. The first signal is the "true" signal after decontamination while the other four are the neuropil signals estimated by FISSA.
 
 ## What's next?
 
