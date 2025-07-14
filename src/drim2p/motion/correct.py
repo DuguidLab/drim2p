@@ -249,27 +249,25 @@ Processing time: {time_string}\
         f"Saving 'imaging' dataset to '{path}' "
         f"({compression=}, {compression_opts=}, {shuffle=})."
     )
+
     # Manually save the motion-corrected sequence instead of using dataset.export_frames
     # to avoid extra dimensions, and because we're a bit faster when working with larger
-    # files.
+    # files, and because SIMA saves it as float64 with no decimal part (?) and we can
+    # save 3/4 of the space by keeping it uint16.
     sequence = dataset.sequences[0]
     shape = sequence.shape
-    file_dataset = None
+    file_dataset = file.create_dataset(
+        "imaging",
+        shape=shape[0:1] + shape[2:4],
+        dtype=np.uint16,
+        chunks=(1,) + shape[2:4],
+        compression=compression,
+        compression_opts=compression_opts,
+        shuffle=shuffle,
+    )
     for i, frame in enumerate(iter(sequence)):
-        if file_dataset is None:
-            # Delay creation so we can get the frame datatype. We could use
-            # dataset._dataset.dtype but that only works for HDF5 datasets and might
-            # as well not lock ourselves into that.
-            file_dataset = file.create_dataset(
-                "imaging",
-                shape=shape[0:1] + shape[2:4],
-                dtype=frame.dtype,
-                chunks=(1,) + shape[2:4],
-                compression=compression,
-                compression_opts=compression_opts,
-                shuffle=shuffle,
-            )
-        file_dataset[i] = frame.squeeze()
+        # No need to use `np.round` as the decimal part is seemingly always 0
+        file_dataset[i] = frame.squeeze().astype(np.uint16)
 
     _logger.debug("Saving displacements.")
     np.savez_compressed(
