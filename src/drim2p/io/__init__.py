@@ -6,12 +6,14 @@ from collections.abc import Iterable
 import logging
 import pathlib
 import re
-from typing import Any
+from typing import Any, Literal, get_args
 
 import h5py
 import numpy as np
 
 _logger = logging.getLogger(__name__)
+
+COMPRESSION = Literal["gzip", "lzf"]
 
 
 def collect_paths_from_extensions(
@@ -196,6 +198,39 @@ def find_paths(
     _logger.debug(f"Collected {len(paths)} paths.")
 
     return paths
+
+
+def get_h5py_compression_parameters(
+    compression: COMPRESSION | None, compression_opts: int | None = None
+) -> tuple[COMPRESSION | None, int | None, bool]:
+    """Returns compression parameters for the given compression.
+
+    Args:
+        compression (COMPRESSION | None): Compression algorithm to use.
+        compression_opts (int | None, optional): Compression algorithm options.
+
+    Returns:
+        A tuple of (compression, compression_opts, shuffle) where `compression` is a
+        valid compression value for `h5py.Group.create_dataset`, acompression_optsa is
+        a valid aggression level for 'gzip' compression and `None` otherwise, and
+        `shuffle` is whether to do byte-shuffling (only enabled for 'lzf' compression).
+    """
+    if compression is None:
+        compression_opts = None
+        shuffle = False
+    elif compression == "gzip":
+        compression_opts = compression_opts or 4
+        shuffle = False
+    elif compression == "lzf":
+        compression_opts = None
+        shuffle = True
+    else:
+        raise ValueError(
+            f"Unknown compression value: '{compression}'. "
+            f"Allowed values are: {', '.join(get_args(COMPRESSION))}, None."
+        )
+
+    return compression, compression_opts, shuffle
 
 
 def group_paths_by_regex(

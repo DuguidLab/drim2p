@@ -8,7 +8,7 @@ import itertools
 import logging
 import os
 import pathlib
-from typing import Any
+from typing import Any, get_args
 
 import click
 import h5py
@@ -107,10 +107,25 @@ _logger = logging.getLogger(__name__)
     ),
 )
 @click.option(
-    "--no-compression",
+    "-c",
+    "--compression",
     required=False,
-    is_flag=True,
-    help="Whether to disable compression for the output HDF5 files.",
+    type=click.Choice(get_args(io.COMPRESSION), case_sensitive=False),
+    default=None,
+    callback=lambda _, __, x: x if x is None else x.lower(),
+    help="Compression algorithm to use.",
+)
+@click.option(
+    "--aggression",
+    "compression_opts",
+    required=False,
+    type=click.IntRange(0, 9),
+    default=4,
+    help=(
+        "Aggression level to use for GZIP compression. Lower means faster/worse "
+        "compression, higher means slower/better compression. Ignored if "
+        "'--compression' is not GZIP."
+    ),
 )
 @click.option(
     "--generate-timestamps",
@@ -150,7 +165,8 @@ def convert_raw(
     recursive: bool = False,
     include: str | None = None,
     exclude: str | None = None,
-    no_compression: bool = False,
+    compression: io.COMPRESSION | None = None,
+    compression_opts: int | None = None,
     generate_timestamps: bool = False,
     force: bool = False,
 ) -> None:
@@ -188,8 +204,9 @@ def convert_raw(
         exclude (str | None, optional):
             Exclude filters to apply when searching for RAW files. This supports
             regular-expressions. Exclude filters are applied after all include filters.
-        no_compression (bool, optional):
-            Whether to disable compression for the output HDF5 files.
+        compression (io.COMPRESSION | None, optional): Compression algorithm to use.
+        compression_opts (int | None, optional):
+            Compression options to use with the given algorithm.
         generate_timestamps (bool, optional):
             Whether to generate timestamps from the notes entries of the RAW files. A
             ".notes.txt" file should be present along the RAW file when this is set.
@@ -283,8 +300,14 @@ def convert_raw(
         array = raw_io.read_raw_as_numpy(path, shape, dtype)
 
         # Output as HDF5
-        _logger.debug(f"Writing to HDF5 ({out_path}).")
-        compression = None if no_compression else "lzf"
+        compression, compression_opts, shuffle = io.get_h5py_compression_parameters(
+            compression, compression_opts
+        )
+
+        _logger.debug(
+            f"Writing HDF5 to '{out_path}' "
+            f"({compression=}, {compression_opts=}, {shuffle=})."
+        )
         with h5py.File(out_path, "w") as handle:
             dataset = handle.create_dataset(
                 "data",
@@ -292,7 +315,8 @@ def convert_raw(
                 # Chunk per frame, same for writing but speeds up reading a lot
                 chunks=(1, *shape[1:]),
                 compression=compression,
-                shuffle=True,
+                compression_opts=compression_opts,
+                shuffle=shuffle,
             )
 
             for key, value in ini_metadata.items():
@@ -303,7 +327,8 @@ def convert_raw(
                     "timestamps",
                     data=timestamps,
                     compression=compression,
-                    shuffle=True,
+                    compression_opts=compression_opts,
+                    shuffle=shuffle,
                 )
 
         _logger.info(f"Finished converting '{path}'.")
