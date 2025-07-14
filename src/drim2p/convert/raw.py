@@ -302,6 +302,8 @@ def convert_raw(
                     shuffle=True,
                 )
 
+        _logger.info(f"Finished converting '{path}'.")
+
 
 def _generate_timestamps(
     raw_path: pathlib.Path, ini_metadata: dict[str, Any]
