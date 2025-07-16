@@ -3,7 +3,6 @@ import pathlib
 from typing import Any
 
 import click
-import fissa
 import h5py
 
 from drim2p import cli_utils, io
@@ -165,6 +164,9 @@ def _extract_signal_for_group(
     dont_abort_on_skipped_file: bool,
     force: bool,
 ) -> None:
+    # Lazy time-consuming import
+    import fissa
+
     handles: list[h5py.File] = []
 
     def abort() -> None:

@@ -11,7 +11,6 @@ from typing import Any, get_args
 import click
 import h5py
 import numpy as np
-import sima
 
 from drim2p import cli_utils, io, models
 
@@ -172,6 +171,9 @@ def _apply_motion_correction(
     compression_opts: int | None,
     force: bool = False,
 ) -> None:
+    # Lazy time-consuming import
+    import sima
+
     # Keep own handle to check for motion correction dataset
     file = h5py.File(path, "a", locking=False)
 
