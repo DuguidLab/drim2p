@@ -41,7 +41,7 @@ def parse_metadata_from_ome(
 
     shape = pixels.size_t, pixels.size_y, pixels.size_x
     dtype = np.dtype(pixels.type.numpy_dtype).newbyteorder(
-        ">" if pixels.big_endian or True else "<"
+        ">" if pixels.big_endian else "<"
     )
 
     return shape, dtype

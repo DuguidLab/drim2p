@@ -51,7 +51,7 @@ def collect_paths_from_extensions(
         This matches each item of iterable1 against all those of iterable2 and computes
         whether they are the same, then returns if at least one of the matches is True.
         """
-        return any(map(lambda x: x in iterable2, iterable1))
+        return any(x in iterable2 for x in iterable1)
 
     collected = []
 

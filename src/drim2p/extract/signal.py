@@ -176,7 +176,7 @@ def _extract_signal_for_group(
 
     _logger.info(
         f"Extracting and decontaminating signal for "
-        f"'{", '".join(map(lambda x: x.stem, group))}'."
+        f"'{", '".join(x.stem for x in group)}'."
     )
 
     skip_or_abort_message = (
