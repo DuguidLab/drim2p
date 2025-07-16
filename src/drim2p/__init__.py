@@ -7,7 +7,12 @@ import sys
 
 import click
 
-from drim2p import convert, deltaf, draw, extract, logs, motion
+from drim2p import convert
+from drim2p import deltaf
+from drim2p import draw
+from drim2p import extract
+from drim2p import logs
+from drim2p import motion
 
 _logger = logging.getLogger("drim2p")
 

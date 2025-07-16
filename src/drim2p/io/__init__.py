@@ -2,11 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 
-from collections.abc import Iterable
 import logging
 import pathlib
 import re
-from typing import Any, Literal, get_args
+from collections.abc import Iterable
+from typing import Any
+from typing import Literal
+from typing import get_args
 
 import h5py
 import numpy as np
@@ -249,7 +251,7 @@ def group_paths_by_regex(
     """
     matches = [re.findall(group_by_regex, path.stem) for path in paths]
     groups: dict[str, list[pathlib.Path]] = {}
-    for match, path in zip(matches, paths):
+    for match, path in zip(matches, paths, strict=True):
         if len(match) == 0:
             # If no matches found, default to a group of size 1 with the current path
             match.append(path.stem)

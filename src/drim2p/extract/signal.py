@@ -5,7 +5,8 @@ from typing import Any
 import click
 import h5py
 
-from drim2p import cli_utils, io
+from drim2p import cli_utils
+from drim2p import io
 
 _logger = logging.getLogger(__name__)
 
@@ -234,7 +235,7 @@ def _extract_signal_for_group(
 
     if len(handles) == 0:
         _logger.error("All files for the current group were skipped.")
-        return
+        return None
 
     experiment = fissa.Experiment(datasets, all_rois)
     # This adds a .result array to experiment which has shape:

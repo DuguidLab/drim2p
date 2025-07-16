@@ -8,7 +8,8 @@ import datetime
 import enum
 import pathlib
 import tomllib
-from typing import Any, cast
+from typing import Any
+from typing import cast
 
 import pydantic
 

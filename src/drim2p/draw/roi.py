@@ -14,7 +14,8 @@ import h5py
 import napari
 import numpy as np
 
-from drim2p import cli_utils, io
+from drim2p import cli_utils
+from drim2p import io
 
 _logger = logging.getLogger(__name__)
 
@@ -256,7 +257,9 @@ def draw_roi(
             _logger.debug("Saving ROIs.")
             roi_group = handle.create_group("ROIs")
             roi_shape_types = []
-            for index, (roi, shape_type) in enumerate(zip(rois.data, rois.shape_type)):
+            for index, (roi, shape_type) in enumerate(
+                zip(rois.data, rois.shape_type, strict=True)
+            ):
                 # Discard line and path ROIs
                 if shape_type not in ("rectangle", "ellipse", "polygon"):
                     _logger.error(
@@ -341,7 +344,7 @@ def _remove_duplicates(
         current = rois[i]
         # Check if current ROI is a duplicate of any of the previous ones
         if any(
-            (np.all(current == roi) for roi in rois[:i] if current.shape == roi.shape)
+            np.all(current == roi) for roi in rois[:i] if current.shape == roi.shape
         ):
             rois.pop(i)
             roi_shape_types.pop(i)

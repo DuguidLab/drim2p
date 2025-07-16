@@ -8,13 +8,16 @@ import itertools
 import logging
 import os
 import pathlib
-from typing import Any, get_args
+from typing import Any
+from typing import get_args
 
 import click
 import h5py
 import numpy as np
 
-from drim2p import cli_utils, io, models
+from drim2p import cli_utils
+from drim2p import io
+from drim2p import models
 from drim2p.io import raw as raw_io
 
 _logger = logging.getLogger(__name__)

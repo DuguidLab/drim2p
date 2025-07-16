@@ -149,6 +149,7 @@ ignore = [
 ]
 
 unfixable = [
+    "B905",  # force programmer to decide which strictness to use with `builtins.zip`
     "F841",  # unused variable. ruff keeps the call, but mostly we want to get rid of it all
     "F601",  # automatic fix might obscure issue
     "F602",  # automatic fix might obscure issue

@@ -4,14 +4,17 @@
 
 import logging
 import pathlib
-from typing import Any, Literal, get_args
+from typing import Any
+from typing import Literal
+from typing import get_args
 
 import click
 import h5py
 import numpy as np
 import numpy.typing as npt
 
-from drim2p import cli_utils, io
+from drim2p import cli_utils
+from drim2p import io
 
 _logger = logging.getLogger(__name__)
 
@@ -300,7 +303,7 @@ def compute_f0(
     elif method not in get_args(_F0Method):
         raise ValueError(
             f"Unknown method: '{method}'. "
-            f"Valid methods are: {", ".join(get_args(_F0Method))}"
+            f"Valid methods are: {', '.join(get_args(_F0Method))}"
         )
 
     # No rolling window, compute single value along first axis and be done
@@ -332,7 +335,7 @@ def compute_f0(
     if padding_mode not in get_args(_PaddingMode):
         raise ValueError(
             f"Unknown padding mode '{padding_mode}'. "
-            f"Valid modes are: {", ".join(get_args(_PaddingMode))}."
+            f"Valid modes are: {', '.join(get_args(_PaddingMode))}."
         )
     # Passing kwarg `constant_values` for methods other than "constant" raises a
     # ValueError.
