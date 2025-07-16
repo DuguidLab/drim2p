@@ -52,6 +52,7 @@ path = "src/drim2p/__about__.py"
 [dependency-groups]
 dev = [
   { include-group = "docs" },
+  { include-group = "lint" },
   { include-group = "test" },
   { include-group = "types" },
 ]
@@ -65,6 +66,9 @@ docs = [
   "mkdocs-material",
   "mkdocs-section-index",
   "mkdocstrings-python",
+]
+lint = [
+  "ruff",
 ]
 test = [
   "pytest",
@@ -82,12 +86,80 @@ docs-build-lax = "mkdocs build --clean"
 docs-build = "docs-build-lax --strict"
 docs-serve = "mkdocs serve --dev-addr localhost:8888"
 
+lint-check = "ruff check"
+lint-fix = "lint-check --fix"
+lint-run = "lint-fix && ruff format {args:src/drim2p/ tests/}"
+
 test-run-coverage = "pytest --cov=src/drim2p --cov-report=term-missing:skip-covered --cov-report=html"
 test-run-coverage-browser = "test-run-coverage; open htmlcov/index.html"
 test-run = "test-run-coverage --no-cov"
 
 types-check = "mypy --install-types --non-interactive {args:src/drim2p/ tests/}"
 types-report = "types-check --html-report mypy-report/"
+
+[tool.ruff]
+line-length = 88
+fix = true
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [
+  "E",       # pycodestyle (error)
+  "F",       # pyflakes
+  "W",       # pycodestyle (warning)
+  "B",       # flake8-bugbear
+  "I",       # isort
+  "N",       # pep8-naming
+  "PIE",     # flake8-pie
+  "PLE",     # pylint error
+  "RUF100",  # Unused noqa comments
+  "PGH004",  # blanket noqa comments
+  "UP",      # pyupgrade
+  "C4",      # flake8-comprehensions
+  "SIM101",  # merge duplicate isinstance calls
+  "SIM201", "SIM202", "SIM222", "SIM223",  # flake8-simplify
+  "FURB168", # Prefer is operator over isinstance for None checks
+  "FURB169", # Do not use is comparison with type(None). Use None
+  "FURB187", # avoid list reverse copy
+  "FURB188", # use str.remove(pre|suf)fix
+  "ISC001",  # implicitly concatenated string
+  "RET501", "RET502",  # better return None handling
+]
+
+ignore = [
+  "B007",  # Loop control variable not used within the loop body.
+  "B011",  # Don't use assert False
+  "B023",  # Function definition does not bind loop variable
+  "E2",    # conflicts with black
+  "E402",  # module level import not at top of file
+  "E501",  # conflicts with black
+  "E721",  # Use `is` and `is not` for type comparisons, or `isinstance()` for isinstance checks
+  "E731",  # Do not assign a `lambda` expression, use a `def`
+  "E741",  # Ambiguous variable name
+  "N818",  # Exception should be named with an Error suffix
+  "N806",  # UPPER_CASE used for constant local variables
+  "UP031", # Use format specifiers instead of percent format
+  "UP032", # 'f-string always preferable to format' is controversial
+  "C409",  # https://github.com/astral-sh/ruff/issues/12912
+  "C420",  # reads a little worse. fromkeys predates dict comprehensions
+  "C416",  # There are a few cases where it's nice to have names for the dict items
+  "PIE790", # there's nothing wrong with pass
+]
+
+unfixable = [
+    "F841",  # unused variable. ruff keeps the call, but mostly we want to get rid of it all
+    "F601",  # automatic fix might obscure issue
+    "F602",  # automatic fix might obscure issue
+    "B018",  # automatic fix might obscure issue
+    "UP036", # sometimes it's better to just noqa this
+    "SIM222", # automatic fix might obscure issue
+    "SIM223", # automatic fix might obscure issue
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true
 
 # `mypy` config
 [tool.mypy]
