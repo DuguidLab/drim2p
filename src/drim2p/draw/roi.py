@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
+
 import logging
 import pathlib
 from typing import Any
@@ -275,9 +277,7 @@ def _start_roi_gui(
     projected: da.Array | None = None,
     rois: list[np.ndarray[Any, np.dtype[np.number]]] | None = None,
     roi_shape_types: str | list[str] | None = None,
-    # napari delays the loading of its modules but we're forcing it to load a lot by
-    # typing here so quote it to improve startup time.
-) -> "napari.layers.shapes.shapes.Shapes | None":
+) -> napari.layers.shapes.shapes.Shapes | None:
     if roi_shape_types is None:
         roi_shape_types = "rectangle"
 
