@@ -365,9 +365,9 @@ def _generate_timestamps(
     frame_count = ini_metadata.get("frame.count")
     if frame_count is None:
         _logger.error(
-            f"Requested to generate timestamps but frame count could "
-            f"not be retrieved from INI metadata. Skipping timestamp "
-            f"generation."
+            "Requested to generate timestamps but frame count could "
+            "not be retrieved from INI metadata. Skipping timestamp "
+            "generation."
         )
         return None
 
