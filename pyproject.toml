@@ -43,34 +43,19 @@ Documentation = "https://github.com/DuguidLab/drim2p#readme"
 Issues = "https://github.com/DuguidLab/drim2p/issues"
 Source = "https://github.com/DuguidLab/drim2p"
 
-[tool.hatch.version]
-path = "src/drim2p/__about__.py"
-
 [project.scripts]
 drim2p = "drim2p:drim2p"
 
-# `types` environment
-[tool.hatch.envs.types]
-dependencies = [
-  "mypy[reports]>=1.0.0",
-]
-[tool.hatch.envs.types.scripts]
-check = "mypy --install-types --non-interactive {args:src/drim2p/ tests/}"
-report = "check --html-report mypy-report/"
+[tool.hatch.version]
+path = "src/drim2p/__about__.py"
 
-# `test` environment
-[tool.hatch.envs.test]
-dependencies = [
-  "pytest",
-  "pytest-cov",
+[dependency-groups]
+dev = [
+  { include-group = "docs" },
+  { include-group = "test" },
+  { include-group = "types" },
 ]
-[tool.hatch.envs.test.scripts]
-run-coverage = "pytest --cov=src/drim2p --cov-report=term-missing:skip-covered --cov-report=html"
-run-coverage-browser = "run-coverage ; open htmlcov/index.html"
-run = "run-coverage --no-cov"
-
-[tool.hatch.envs.docs]
-dependencies = [
+docs = [
   "griffe-pydantic",
   "mkdocs",
   "mkdocs-caption",
@@ -81,9 +66,28 @@ dependencies = [
   "mkdocs-section-index",
   "mkdocstrings-python",
 ]
-[tool.hatch.envs.docs.scripts]
-build = "mkdocs build --clean --strict"
-serve = "mkdocs serve --dev-addr localhost:8888"
+test = [
+  "pytest",
+  "pytest-cov",
+]
+types = [
+  "mypy[install-types, faster-cache, reports]",
+]
+
+[tool.hatch.envs.default]
+path = ".venv"  # Use the environment provided by uv
+
+[tool.hatch.envs.default.scripts]
+docs-build-lax = "mkdocs build --clean"
+docs-build = "docs-build-lax --strict"
+docs-serve = "mkdocs serve --dev-addr localhost:8888"
+
+test-run-coverage = "pytest --cov=src/drim2p --cov-report=term-missing:skip-covered --cov-report=html"
+test-run-coverage-browser = "test-run-coverage; open htmlcov/index.html"
+test-run = "test-run-coverage --no-cov"
+
+types-check = "mypy --install-types --non-interactive {args:src/drim2p/ tests/}"
+types-report = "types-check --html-report mypy-report/"
 
 # `mypy` config
 [tool.mypy]
@@ -96,6 +100,7 @@ show_error_code_links = true
 untyped_calls_exclude = [
   "dask.array"
 ]
+
 [[tool.mypy.overrides]]
 module = [
   "h5py.*",
@@ -113,9 +118,11 @@ parallel = true
 omit = [
   "src/drim2p/__about__.py",
 ]
+
 [tool.coverage.paths]
 drim2p = ["src/drim2p", "*/drim2p/src/drim2p"]
 tests = ["tests", "*/drim2p/tests"]
+
 [tool.coverage.report]
 exclude_lines = [
   "no cov",
