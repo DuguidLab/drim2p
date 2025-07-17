@@ -39,7 +39,7 @@ class MotionConfig(pydantic.BaseModel):
 
     @classmethod
     def from_file(cls, path: pathlib.Path) -> MotionConfig:
-        with open(path, "rb") as handle:
+        with path.open("rb") as handle:
             contents = tomllib.load(handle)
 
         dictionary = contents.get("motion-correction")

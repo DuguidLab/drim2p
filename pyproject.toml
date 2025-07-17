@@ -149,7 +149,7 @@ select = [
   "TD",      # Ensure proper use of TODOs
   "TC",      # Ensure proper typing imports and forward references
   "ARG",     # Disallow unused arguments
-  # "PTH",     # Ensure `pathlib` functions are used where possible
+  "PTH",     # Ensure `pathlib` functions are used where possible
   "FLY",     # Favour f-strings to `str.join`
   "I",       # Ensure properly sorted imports
   "NPY",     # Disallow use of deprecated NumPy functions and type aliases

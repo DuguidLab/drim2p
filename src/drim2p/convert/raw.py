@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import itertools
 import logging
-import os
 import pathlib
 from typing import Any
 from typing import get_args
@@ -220,16 +219,18 @@ def convert_raw(
 
     # If we are going to process at least a file, ensure the output directory exists
     if len(raw_paths) > 0 and out is not None:
-        # First, ensure the parent of out exists. We should only support creating a
-        # single directory, not a nested hierarchy as a single typo in a path can result
-        # in a lot of folders being created in a way a user might not expect.
-        if not out.parent.exists():
+        # Only allow creating a directory inside an existing parent. We should only
+        # support creating a single directory, not a nested hierarchy as a single typo
+        # in a path can result in a lot of folders being created in a way a user might
+        # not expect.
+        try:
+            out.mkdir(exist_ok=True)
+        except FileNotFoundError:
             _logger.error(
                 f"Neither provided output directory '{out}' nor its parent exist. "
                 f"Aborting."
             )
             return
-        os.makedirs(out, exist_ok=True)
 
     # Ignore ini_path and xml_path if we are working with a directory
     if source.is_dir():

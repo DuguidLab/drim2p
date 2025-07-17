@@ -233,9 +233,11 @@ Strategy: {settings.strategy.name}
 Displacement: {list(settings.displacement)}
 Processing time: {time_string}\
     """
-    with open(
-        path.with_stem(path.stem + "_motion_correction_report").with_suffix(".txt"), "w"
-    ) as handle:
+    with (
+        path.with_stem(path.stem + "_motion_correction_report")
+        .with_suffix(".txt")
+        .open("w") as handle
+    ):
         handle.write(report_string)
 
     # Save motion corrected dataset and displacements
