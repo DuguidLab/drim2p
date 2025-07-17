@@ -136,8 +136,8 @@ def filter_paths(
     if include is not None:
         included = []
         for path in paths:
-            for filter in include:
-                if re.findall(filter, str(path)):
+            for filter_ in include:
+                if re.findall(filter_, str(path)):
                     included.append(path)
                     break
 
@@ -146,8 +146,8 @@ def filter_paths(
     if exclude is not None:
         filtered = []
         for path in included:
-            for filter in exclude:
-                if re.findall(filter, str(path)):
+            for filter_ in exclude:
+                if re.findall(filter_, str(path)):
                     break
                 else:
                     filtered.append(path)
