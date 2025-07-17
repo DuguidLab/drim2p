@@ -76,7 +76,7 @@ class MotionConfig(pydantic.BaseModel):
                 f"Could not parse '{displacement}' as two displacement values."
             )
         try:
-            displacement = cast(tuple[int, int], tuple(map(int, displacement)))
+            displacement = cast("tuple[int, int]", tuple(map(int, displacement)))
         except ValueError:
             raise ValueError(
                 f"Could not parse '{displacement}' as a tuple of integers values."
