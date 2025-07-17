@@ -378,7 +378,8 @@ def _compute_f0(
 ) -> npt.NDArray[Any]:
     f0: npt.NDArray[Any]
     if method == "percentile":
-        assert percentile is not None, "Cannot compute percentile when it is `None`."
+        if percentile is None:
+            raise ValueError("Cannot compute percentile when it is `None`.")
         f0 = np.percentile(array, percentile, axis=0)
     elif method == "mean":
         f0 = np.mean(array, axis=0)

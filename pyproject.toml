@@ -119,7 +119,7 @@ select = [
   "ERA",     # Disallow commented out code
   "YTT",     # Prevent misuse of `sys.version`
   "ANN",     # Force function annotations
-  # "S",       # Security testing (flake8-bandit)
+  "S",       # Security testing (flake8-bandit)
   "BLE",     # Disallow blind except
   "B",       # Catch common sources of bugs
   # "A",       # Disallow shadowing builtins
