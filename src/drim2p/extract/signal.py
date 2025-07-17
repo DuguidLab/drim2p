@@ -239,7 +239,7 @@ def _extract_signal_for_group(
 
     experiment = fissa.Experiment(datasets, all_rois)
     # This adds a .result array to experiment which has shape:
-    # (ROI, trial)(signal, timepoint)
+    # (ROI, trial)(signal, timepoint)  # noqa: ERA001
     # where:
     #     ROI is the ROI index,
     #     trial is the dataset index

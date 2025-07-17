@@ -116,7 +116,7 @@ docstring-code-format = true
 preview = true
 
 select = [
-  # "ERA",     # Disallow commented out code
+  "ERA",     # Disallow commented out code
   "YTT",     # Prevent misuse of `sys.version`
   "ANN",     # Force function annotations
   # "S",       # Security testing (flake8-bandit)
