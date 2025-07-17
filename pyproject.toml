@@ -130,7 +130,7 @@ select = [
   "T10",     # Disallow debugger traces
   # "EM",      # Disallow strings inside expression constructors
   "EXE",     # Validate shebangs
-  # "FIX",     # Remind about FIXMEs
+  "FIX",     # Remind about FIXMEs
   "FA",      # Ensure proper usage of `from __future__ import annotations`
   "ISC",     # Ensure good practice for implicit string concatenation
   "ICN",     # Force using conventional aliases for popular packages
@@ -169,6 +169,7 @@ select = [
 
 ignore = [
   "ANN401",            # Allow `Any` function parameter
+  "FIX002",            # Allow unsolved TODOs
   "RET505", "RET506",  # Avoid false posiives (especially with `if-elif` where the `if` returns or raises)
   "TD002", "TD003",    # Don't enforce including an author or issue with TODOs
 ]
