@@ -75,7 +75,7 @@ Once `pipx` has been installed, run the following command:i
 pip install drim2p
 ```
 
-And that should be you sorted! From there, `drim2p` will be available as a command in your terminal.  
+And that should be you sorted! From there, `drim2p` will be available as a command in your terminal.
 
 To ensure that everything installed property, you can run:
 
