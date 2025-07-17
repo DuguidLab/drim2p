@@ -121,7 +121,6 @@ def apply_motion_correction(
     recursive: bool = False,
     include: str | None = None,
     exclude: str | None = None,
-    strict_filters: bool = False,
     compression: io.COMPRESSION | None = None,
     compression_opts: int | None = None,
     force: bool = False,
@@ -146,9 +145,6 @@ def apply_motion_correction(
         exclude (str | None, optional):
             Exclude filters to apply when searching for HDF5 files. This supports
             regular-expressions. Exclude filters are applied after all include filters.
-        strict_filters (bool, optional):
-            Whether files not matching any include filter should be excluded, regardless
-            of exclude filters. This is ignored if no include filters are provided.
         compression (io.COMPRESSION | None, optional): Compression algorithm to use.
         compression_opts (int | None, optional):
             Compression options to use with the given algorithm.
