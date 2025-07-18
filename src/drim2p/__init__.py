@@ -1,6 +1,6 @@
-#  SPDX-FileCopyrightText: © 2025 Olivier Delrée <olivierdelree@protonmail.com>
+# SPDX-FileCopyrightText: © 2025 Olivier Delrée <olivierdelree@protonmail.com>
 #
-#  SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: MIT
 
 import logging
 import sys

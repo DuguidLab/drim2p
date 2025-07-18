@@ -125,7 +125,7 @@ select = [
   "A",       # Disallow shadowing builtins
   "COM818",  # Trailing comma rules
   "C4",      # Ensure correct comprehensions
-  # "CPY",     # Force a copyright notice at the top of files
+  "CPY",     # Force a copyright notice at the top of files
   "DTZ",     # Disallow naive datetime
   "T10",     # Disallow debugger traces
   "EM",      # Disallow strings inside exception constructors
@@ -183,6 +183,9 @@ ignore = [
 unfixable = [
   "B905",  # Force programmer to decide which strictness to use with `builtins.zip`
 ]
+
+[tool.ruff.lint.flake8-copyright]
+notice-rgx = "(?i)SPDX-FileCopyrightText: © ?\\d{4}"
 
 [tool.ruff.lint.flake8-tidy-imports]
 banned-module-level-imports = [

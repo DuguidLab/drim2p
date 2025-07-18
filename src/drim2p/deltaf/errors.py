@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: © 2025 Olivier Delrée <olivierdelree@protonmail.com>
+#
+# SPDX-License-Identifier: MIT
+
 from collections.abc import Sequence
 from typing import Any
 

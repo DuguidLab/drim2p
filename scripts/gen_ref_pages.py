@@ -1,3 +1,4 @@
+# noqa: CPY001
 """Generate the code reference pages.
 
 Adapted from: https://mkdocstrings.github.io/recipes/#automatic-code-reference-pages
