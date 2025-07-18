@@ -138,7 +138,8 @@ class MotionConfig(pydantic.BaseModel):
         displacement = dictionary.get("displacement")
         if displacement is None:
             raise ConfigKeyNotFoundError("displacement")  # noqa: EM101
-        if not hasattr(displacement, "__len__") or len(displacement) != 2:
+        # Displacement should be two values, [X, Y]
+        if not hasattr(displacement, "__len__") or len(displacement) != 2:  # noqa: PLR2004
             raise InvalidConfigValueError(
                 "displacement",  # noqa: EM101
                 displacement,

@@ -229,8 +229,8 @@ def draw_roi(
                 _logger.debug("'force' was set. Skipping looking for existing ROIs.")
 
             # Merge template and existing
-            rois = rois + template_rois
-            roi_shape_types = roi_shape_types + template_roi_shape_types
+            rois += template_rois
+            roi_shape_types += template_roi_shape_types
 
             # If a template is used on a file twice or more, it will generate
             # duplicates.
@@ -261,7 +261,7 @@ def draw_roi(
                 zip(rois.data, rois.shape_type, strict=True)
             ):
                 # Discard line and path ROIs
-                if shape_type not in ("rectangle", "ellipse", "polygon"):
+                if shape_type not in {"rectangle", "ellipse", "polygon"}:
                     _logger.error(
                         f"ROI {index} has an unssuported shape type '{shape_type}'. "
                         f"Discarding it."
@@ -336,7 +336,8 @@ def _remove_duplicates(
     rois: list[np.ndarray[Any, np.dtype[np.number]]],
     roi_shape_types: list[str],
 ) -> tuple[list[np.ndarray[Any, np.dtype[np.number]]], list[str]]:
-    if len(rois) < 2:
+    # If we have fewer than 2 ROIs, return early
+    if len(rois) < 2:  # noqa: PLR2004
         return rois, roi_shape_types
 
     i = 1

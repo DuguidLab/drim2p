@@ -4,7 +4,7 @@
 
 import click
 
-import drim2p.motion.correct as correct
+from drim2p.motion import correct
 
 
 @click.group()

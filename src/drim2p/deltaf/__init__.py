@@ -24,6 +24,9 @@ from drim2p.deltaf.errors import UnknownPaddingModeError
 
 _logger = logging.getLogger(__name__)
 
+_1Dimensional = 1
+_2Dimensional = 2
+
 _F0Method = Literal["percentile", "mean", "median"]
 _PaddingMode = Literal["constant", "reflect", "wrap", "edge"]
 
@@ -302,14 +305,14 @@ def compute_f0(
     """
     # Ensure data is 2D
     got_1d_in = False
-    if len(array.shape) > 2 or len(array.shape) < 1:
+    if len(array.shape) > _2Dimensional or len(array.shape) < _1Dimensional:
         raise ArrayDimensionNotSupportedError(len(array.shape))
     elif len(array.shape) == 1:
         got_1d_in = True
         array = array.reshape(-1, 1)
 
     if method == "percentile":
-        if not 0 <= percentile <= 100:
+        if not 0 <= percentile <= 100:  # noqa: PLR2004
             raise OutOfRangePercentileError(percentile)
     # 'median' is a convenience method for percentile=50
     elif method == "median":

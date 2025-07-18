@@ -17,6 +17,15 @@ from drim2p import motion
 _logger = logging.getLogger("drim2p")
 
 
+class LoggingVerbosity:
+    """Verbosity level of the package logging."""
+
+    ERROR = -2
+    WARNING = -1
+    INFO = 0
+    DEBUG = 1
+
+
 @click.group(invoke_without_command=True)
 @click.option(
     "-v",
@@ -86,13 +95,13 @@ def set_up_logging(verbosity: int, quietness: int, no_colour: bool) -> None:
 
     # Quietness overrides verbosity
     level = -quietness if quietness > 0 else verbosity
-    if level <= -2:
+    if level <= LoggingVerbosity.ERROR:
         _logger.setLevel(logging.ERROR)
-    elif level == -1:
+    elif level == LoggingVerbosity.WARNING:
         _logger.setLevel(logging.WARNING)
-    elif level == 0:
+    elif level == LoggingVerbosity.INFO:
         _logger.setLevel(logging.INFO)
-    elif level >= 1:
+    elif level >= LoggingVerbosity.DEBUG:
         _logger.setLevel(logging.DEBUG)
 
 

@@ -160,7 +160,7 @@ select = [
   "D",       # Ensure proper docstrings style
   "F",       # Miscellaenous linting (Pyflakes)
   "PGH",     # Disallow blanket `noqa` and `type: ignore`, and invalid mock access
-  # "PL",      # Pylint checks
+  "PL",      # Pylint checks
   "UP",      # Ensure use of up-to-date syntax
   "FURB",    # Ensure use of up-to-date syntax
   "RUF",     # Miscellaneous linting (Ruff)
@@ -176,6 +176,8 @@ ignore = [
   "TC003",                 # Don't force the use of `if TYPE_CHECKING` blocks
   "D100", "D104",          # Allow undocumented modules and packages
   "D107",                  # Don't force a documented `__init__` since we document it at the class level
+  # Allow too many branches, arguments, locals, statements, and positional arguments
+  "PLR0912", "PLR0913", "PLR0914", "PLR0915", "PLR0917",
 ]
 
 unfixable = [
@@ -183,7 +185,11 @@ unfixable = [
 ]
 
 [tool.ruff.lint.flake8-tidy-imports]
-banned-module-level-imports = ["fissa", "sima"]
+banned-module-level-imports = [
+  "fissa",
+  "ome_types",
+  "sima",
+]
 
 [tool.ruff.lint.isort]
 force-single-line = true

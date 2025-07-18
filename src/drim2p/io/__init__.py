@@ -76,11 +76,10 @@ def collect_paths_from_extensions(
             collected.extend(
                 collect_paths_from_extensions(path, extensions, recursive, strict)
             )
-        else:
-            if have_at_least_one_common_element(
-                extensions, [path.suffix] if strict else path.suffixes
-            ):
-                collected.append(path)
+        elif have_at_least_one_common_element(
+            extensions, [path.suffix] if strict else path.suffixes
+        ):
+            collected.append(path)
 
     return collected
 
@@ -260,7 +259,7 @@ def group_paths_by_regex(
         if len(match) == 0:
             # If no matches found, default to a group of size 1 with the current path
             match.append(path.stem)
-        match = match[0]
+        match = match[0]  # noqa: PLW2901
 
         groups[match] = [*groups.get(match, []), path]
 
