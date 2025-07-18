@@ -135,7 +135,7 @@ select = [
   "ISC",     # Ensure good practice for implicit string concatenation
   "ICN",     # Force using conventional aliases for popular packages
   "LOG",     # Ensure good practice for logging
-  # "G",       # Ensure good practice for log formatting
+  "G",       # Ensure good practice for log formatting
   "INP",     # Disallow namespace packages
   "PIE",     # Miscellaenous linting (flake8-pie)
   "T20",     # Disallow print statements
@@ -168,11 +168,12 @@ select = [
 ]
 
 ignore = [
-  "ANN401",            # Allow `Any` function parameter
-  "FIX002",            # Allow unsolved TODOs
-  "RET505", "RET506",  # Avoid false posiives (especially with `if-elif` where the `if` returns or raises)
-  "TD002", "TD003",    # Don't enforce including an author or issue with TODOs
-  "TC003",             # Don't force the use of `if TYPE_CHECKING` blocks
+  "ANN401",                # Allow `Any` function parameter
+  "FIX002",                # Allow unsolved TODOs
+  "G001", "G002", "G004",  # Allow formatted strings inside logging calls
+  "RET505", "RET506",      # Avoid false posiives (especially with `if-elif` where the `if` returns or raises)
+  "TD002", "TD003",        # Don't enforce including an author or issue with TODOs
+  "TC003",                 # Don't force the use of `if TYPE_CHECKING` blocks
 ]
 
 unfixable = [
