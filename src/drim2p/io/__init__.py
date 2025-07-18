@@ -13,6 +13,9 @@ from typing import get_args
 import h5py
 import numpy as np
 
+from drim2p.io.errors import SeparatorTooLongError
+from drim2p.io.errors import UnknownCompressionError
+
 _logger = logging.getLogger(__name__)
 
 COMPRESSION = Literal["gzip", "lzf"]
@@ -227,10 +230,7 @@ def get_h5py_compression_parameters(
         compression_opts = None
         shuffle = True
     else:
-        raise ValueError(
-            f"Unknown compression value: '{compression}'. "
-            f"Allowed values are: {', '.join(get_args(COMPRESSION))}, None."
-        )
+        raise UnknownCompressionError(compression, (*get_args(COMPRESSION), None))
 
     return compression, compression_opts, shuffle
 
@@ -308,7 +308,7 @@ def split_string(string: str, separator: str = ";") -> list[str]:
         ['foo', 'bar', 'foo\\;bar']
     """
     if len(separator) > 1:
-        raise ValueError(f"Separator should be a single character. Got '{separator}'.")
+        raise SeparatorTooLongError(separator)
 
     return re.split(
         rf"(?<!(?<!\\)\\){separator}", string

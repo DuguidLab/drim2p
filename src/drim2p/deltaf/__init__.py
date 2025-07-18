@@ -15,6 +15,12 @@ import numpy.typing as npt
 
 from drim2p import cli_utils
 from drim2p import io
+from drim2p.deltaf.errors import ArrayDimensionNotSupportedError
+from drim2p.deltaf.errors import InvalidPercentileError
+from drim2p.deltaf.errors import OutOfRangePercentileError
+from drim2p.deltaf.errors import RollingWindowTooLargeError
+from drim2p.deltaf.errors import UnknownMethodError
+from drim2p.deltaf.errors import UnknownPaddingModeError
 
 _logger = logging.getLogger(__name__)
 
@@ -284,27 +290,20 @@ def compute_f0(
     # Ensure data is 2D
     got_1d_in = False
     if len(array.shape) > 2 or len(array.shape) < 1:
-        raise ValueError(
-            f"Only 2D arrays are supported. Got {len(array.shape)}D array."
-        )
+        raise ArrayDimensionNotSupportedError(len(array.shape))
     elif len(array.shape) == 1:
         got_1d_in = True
         array = array.reshape(-1, 1)
 
     if method == "percentile":
         if not 0 <= percentile <= 100:
-            raise ValueError(
-                f"Percentile should be between 0 and 100. Got '{percentile}'. "
-            )
+            raise OutOfRangePercentileError(percentile)
     # 'median' is a convenience method for percentile=50
     elif method == "median":
         method = "percentile"
         percentile = 50
     elif method not in get_args(_F0Method):
-        raise ValueError(
-            f"Unknown method: '{method}'. "
-            f"Valid methods are: {', '.join(get_args(_F0Method))}"
-        )
+        raise UnknownMethodError(method, get_args(_F0Method))
 
     # No rolling window, compute single value along first axis and be done
     if window_width <= 0:
@@ -319,11 +318,7 @@ def compute_f0(
     # We have a rolling window
     # Ensure the rolling window is small enough
     if window_width > array.shape[0] * 2 - 1:
-        raise ValueError(
-            f"Rolling window width should be at most twice the length of the first "
-            f"dimension of the input minus 1. Got '{window_width}' which is larger "
-            f"than {array.shape[0] * 2 - 1}."
-        )
+        raise RollingWindowTooLargeError(window_width, array.shape[0])
 
     # Ensure the window_width is odd so that it can be applied on integer indices
     if window_width % 2 == 0:
@@ -333,10 +328,7 @@ def compute_f0(
     # than half of the window_width. We can't normally compute them as the window
     # does not have enough information around the edges.
     if padding_mode not in get_args(_PaddingMode):
-        raise ValueError(
-            f"Unknown padding mode '{padding_mode}'. "
-            f"Valid modes are: {', '.join(get_args(_PaddingMode))}."
-        )
+        raise UnknownPaddingModeError(padding_mode, get_args(_PaddingMode))
     # Passing kwarg `constant_values` for methods other than "constant" raises a
     # ValueError.
     kwargs = {}
@@ -379,7 +371,7 @@ def _compute_f0(
     f0: npt.NDArray[Any]
     if method == "percentile":
         if percentile is None:
-            raise ValueError("Cannot compute percentile when it is `None`.")
+            raise InvalidPercentileError(percentile)
         f0 = np.percentile(array, percentile, axis=0)
     elif method == "mean":
         f0 = np.mean(array, axis=0)

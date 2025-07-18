@@ -12,6 +12,8 @@ from typing import Any
 import numpy as np
 
 from drim2p import models
+from drim2p.io.errors import NoINISectionsFoundError
+from drim2p.io.errors import TooManyINISectionsFoundError
 
 NOTES_ENTRY_PATTERN = re.compile(r"^-+$\n((?:.|\n)+?)\n^-+$\n", flags=re.MULTILINE)
 """Pattern of a notes entry. It consists of lines of text between two lines of '-'s."""
@@ -103,15 +105,9 @@ def parse_metadata_from_ini(
 
     sections = parser.sections()
     if len(sections) < 1:
-        raise ValueError(
-            f"Failed to parse metadata from INI file '{ini_path}': no sections found."
-        )
+        raise NoINISectionsFoundError(ini_path)
     elif len(sections) > 1:
-        raise ValueError(
-            f"Failed to parse metadata from INI file '{ini_path}': "
-            f"too many sections found, only a single section (other than [DEFAULT]) "
-            f"is supported."
-        )
+        raise TooManyINISectionsFoundError(ini_path, sections)
     section = sections[0]
 
     config = dict(parser[section])

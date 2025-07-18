@@ -226,7 +226,7 @@ def convert_raw(
         try:
             out.mkdir(exist_ok=True)
         except FileNotFoundError:
-            _logger.error(
+            _logger.exception(
                 f"Neither provided output directory '{out}' nor its parent exist. "
                 f"Aborting."
             )

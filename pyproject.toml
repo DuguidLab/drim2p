@@ -164,7 +164,7 @@ select = [
   "UP",      # Ensure use of up-to-date syntax
   # "FURB",    # Ensure use of up-to-date syntax
   # "RUF",     # Miscellaneous linting (Ruff)
-  # "TRY",     # Ensure good practice for exception handling
+  "TRY",     # Ensure good practice for exception handling
 ]
 
 ignore = [
@@ -172,6 +172,7 @@ ignore = [
   "FIX002",            # Allow unsolved TODOs
   "RET505", "RET506",  # Avoid false posiives (especially with `if-elif` where the `if` returns or raises)
   "TD002", "TD003",    # Don't enforce including an author or issue with TODOs
+  "TC003",             # Don't force the use of `if TYPE_CHECKING` blocks
 ]
 
 unfixable = [

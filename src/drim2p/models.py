@@ -8,10 +8,32 @@ import datetime
 import enum
 import pathlib
 import tomllib
+from collections.abc import Sequence
 from typing import Any
 from typing import cast
 
 import pydantic
+
+
+class ConfigKeyNotFoundError(Exception):
+    def __init__(self, key: str) -> None:
+        super().__init__(f"Could not find a config entry for key '{key}'.")
+
+
+class InvalidConfigValueError(Exception):
+    def __init__(self, key: str, value: Any, valid: Sequence[str]) -> None:
+        super().__init__(
+            f"Invalid value '{value}' for key '{key}'. "
+            f"Valid values are: {' '.join(valid)}"
+        )
+
+
+class InvalidMotionConfigFileError(Exception):
+    def __init__(self, path: pathlib.Path) -> None:
+        super().__init__(
+            f"Failed to parse TOML file: file does not have a "
+            f"'motion-correction' section. ({path})"
+        )
 
 
 class Strategy(enum.Enum):
@@ -44,10 +66,7 @@ class MotionConfig(pydantic.BaseModel):
 
         dictionary = contents.get("motion-correction")
         if dictionary is None:
-            raise ValueError(
-                f"Cannot parse file '{path}' as a valid motion config. It does not "
-                f"have a 'motion-correction' section."
-            )
+            raise InvalidMotionConfigFileError(path)
 
         return cls.from_dictionary(dictionary)
 
@@ -55,31 +74,26 @@ class MotionConfig(pydantic.BaseModel):
     def from_dictionary(cls, dictionary: dict[str, Any]) -> MotionConfig:
         strategy = dictionary.get("strategy")
         if strategy is None:
-            raise ValueError(
-                "Could not find a strategy from the provided config dictionary."
-            )
+            raise ConfigKeyNotFoundError("strategy")
         try:
             strategy = Strategy(strategy)
         except ValueError:
-            raise ValueError(
-                f"Could not parse '{strategy}' as a valid strategy. "
-                f"Valid options: {', '.join(variant.name for variant in Strategy)}."
+            raise InvalidConfigValueError(
+                "strategy", strategy, [variant.name for variant in Strategy]
             ) from None
 
         displacement = dictionary.get("displacement")
         if displacement is None:
-            raise ValueError(
-                "Could not find a displacement from the provided config dictionary."
-            )
+            raise ConfigKeyNotFoundError("displacement")
         if not hasattr(displacement, "__len__") or len(displacement) != 2:
-            raise ValueError(
-                f"Could not parse '{displacement}' as two displacement values."
+            raise InvalidConfigValueError(
+                "displacement", displacement, ["any two integer values"]
             )
         try:
             displacement = cast("tuple[int, int]", tuple(map(int, displacement)))
         except ValueError:
-            raise ValueError(
-                f"Could not parse '{displacement}' as a tuple of integers values."
+            raise InvalidConfigValueError(
+                "displacement", displacement, ["any two integer values"]
             ) from None
 
         return cls(strategy=strategy, displacement=displacement)
