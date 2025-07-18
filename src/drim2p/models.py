@@ -74,26 +74,32 @@ class MotionConfig(pydantic.BaseModel):
     def from_dictionary(cls, dictionary: dict[str, Any]) -> MotionConfig:
         strategy = dictionary.get("strategy")
         if strategy is None:
-            raise ConfigKeyNotFoundError("strategy")
+            raise ConfigKeyNotFoundError("strategy")  # noqa: EM101
         try:
             strategy = Strategy(strategy)
         except ValueError:
             raise InvalidConfigValueError(
-                "strategy", strategy, [variant.name for variant in Strategy]
+                "strategy",  # noqa: EM101
+                strategy,
+                [variant.name for variant in Strategy],
             ) from None
 
         displacement = dictionary.get("displacement")
         if displacement is None:
-            raise ConfigKeyNotFoundError("displacement")
+            raise ConfigKeyNotFoundError("displacement")  # noqa: EM101
         if not hasattr(displacement, "__len__") or len(displacement) != 2:
             raise InvalidConfigValueError(
-                "displacement", displacement, ["any two integer values"]
+                "displacement",  # noqa: EM101
+                displacement,
+                ["any two integer values"],
             )
         try:
             displacement = cast("tuple[int, int]", tuple(map(int, displacement)))
         except ValueError:
             raise InvalidConfigValueError(
-                "displacement", displacement, ["any two integer values"]
+                "displacement",  # noqa: EM101
+                displacement,
+                ["any two integer values"],
             ) from None
 
         return cls(strategy=strategy, displacement=displacement)

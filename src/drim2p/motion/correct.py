@@ -199,7 +199,8 @@ def _apply_motion_correction(
                 max_displacement=settings.displacement
             )
         case _:
-            raise NotImplementedError(f"Strategy '{settings.strategy}' not implemented")
+            message = f"Strategy '{settings.strategy}' not implemented"  # type: ignore[unreachable]
+            raise NotImplementedError(message)
 
     # Start motion correction
     _logger.info(

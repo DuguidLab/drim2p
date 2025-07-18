@@ -128,7 +128,7 @@ select = [
   # "CPY",     # Force a copyright notice at the top of files
   "DTZ",     # Disallow naive datetime
   "T10",     # Disallow debugger traces
-  # "EM",      # Disallow strings inside expression constructors
+  "EM",      # Disallow strings inside exception constructors
   "EXE",     # Validate shebangs
   "FIX",     # Remind about FIXMEs
   "FA",      # Ensure proper usage of `from __future__ import annotations`
