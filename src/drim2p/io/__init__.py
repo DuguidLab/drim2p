@@ -270,6 +270,16 @@ def group_paths_by_regex(
 def read_rois_and_shapes(
     root: h5py.Group,
 ) -> tuple[list[np.ndarray[Any, np.dtype[np.number]]], list[str]]:
+    """Reads ROI arrays and shapes from an HDF5 group.
+
+    Args:
+        root (h5py.Group): Group that contains the ROIs and their shapes.
+
+    Returns:
+        A tuple of (rois, shapes) where `rois` is a list of NumPy arrays containing the
+        vertices of the ROIs (of shape (X, 2) where X is the number of ROIs), and
+        `shapes` is a list of string values for the shapes of the ROIs.
+    """
     rois = []
     roi_shape_types = []
     roi_group = root.get("ROIs")

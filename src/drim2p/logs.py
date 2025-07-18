@@ -31,6 +31,14 @@ class ColourFormatter(logging.Formatter):
     }
 
     def format(self, record: logging.LogRecord) -> str:
+        """Formats the given record as a string.
+
+        Args:
+            record (logging.LogRecord): Record to format.
+
+        Returns:
+            The record formatter as a string.
+        """
         log_format = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(
             log_format, style="{", datefmt="%Y-%m-%d %H:%M:%S"

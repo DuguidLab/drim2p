@@ -49,15 +49,27 @@ def drim2p(verbosity: int = 0, quietness: int = 0, no_colour: bool = False) -> N
     \f
 
     Args:
-        no_colour (bool, optional): Whether to disable logging colours.
         verbosity (int, optional):
-            Verbosity level. Level 0 is WARNING (default). Level 1 is INFO. Level 2 is
-            DEBUG.
-    """
+            Verbosity level. Level 0 is INFO (default). Level 1 is DEBUG.
+        quietness (int, optional):
+            Quietness level. Level 0 suppresses INFO messages. Level 1 suppresses
+            WARNING messages.
+        no_colour (bool, optional): Whether to disable logging colours.
+    """  # noqa: D205, D301, D415
     set_up_logging(verbosity, quietness, no_colour)
 
 
 def set_up_logging(verbosity: int, quietness: int, no_colour: bool) -> None:
+    """Sets the logging level package.
+
+    Args:
+        verbosity (int):
+            Verbosity level. Level 0 is INFO (default). Level 1 is DEBUG.
+        quietness (int):
+            Quietness level. Level 0 suppresses INFO messages. Level 1 suppresses
+            WARNING messages.
+        no_colour (bool): Whether to disable logging colours.
+    """
     if no_colour:
         formatter = logging.Formatter(
             "[{asctime}] - [{levelname:>9s} ] - {message}",

@@ -16,11 +16,27 @@ import pydantic
 
 
 class ConfigKeyNotFoundError(Exception):
+    """Config key is missing.
+
+    Args:
+        key (str): Missing key.
+    """
+
     def __init__(self, key: str) -> None:
         super().__init__(f"Could not find a config entry for key '{key}'.")
 
 
 class InvalidConfigValueError(Exception):
+    """Value for the given key is not valid.
+
+    Args:
+        key (str): Key of the given value.
+        value (Any): Invalid value.
+        valid (Sequence[str]):
+            Sequence of valid values. This can be a sequence with a single value
+            explaining what kind of value is expected.
+    """
+
     def __init__(self, key: str, value: Any, valid: Sequence[str]) -> None:
         super().__init__(
             f"Invalid value '{value}' for key '{key}'. "
@@ -29,6 +45,12 @@ class InvalidConfigValueError(Exception):
 
 
 class InvalidMotionConfigFileError(Exception):
+    """TOML file is not valid as a motion config as it is missing the proper section.
+
+    Args:
+        path (pathlib.Path): Path to the TOML file.
+    """
+
     def __init__(self, path: pathlib.Path) -> None:
         super().__init__(
             f"Failed to parse TOML file: file does not have a "
@@ -37,6 +59,8 @@ class InvalidMotionConfigFileError(Exception):
 
 
 class Strategy(enum.Enum):
+    """Motion correction strategy."""
+
     Markov = "HiddenMarkov2D"
     Plane = "PlaneTranslation2D"
     Fourier = "DiscreteFourier2D"
@@ -56,11 +80,26 @@ class Strategy(enum.Enum):
 
 
 class MotionConfig(pydantic.BaseModel):
+    """Motion correction config."""
+
     strategy: Strategy = Strategy.Fourier
     displacement: tuple[int, int] = (50, 50)
 
     @classmethod
     def from_file(cls, path: pathlib.Path) -> MotionConfig:
+        """Creates a motion correction config from a TOML file.
+
+        Args:
+            path (pathlib.Path): Path to the TOML file to parse.
+
+        Returns:
+            A motion correction object containing the information from the given TOML
+            file.
+
+        Raises:
+            InvalidMotionConfigFileError:
+                If the TOML file does not have 'motion-correction' section.
+        """
         with path.open("rb") as handle:
             contents = tomllib.load(handle)
 
@@ -72,6 +111,18 @@ class MotionConfig(pydantic.BaseModel):
 
     @classmethod
     def from_dictionary(cls, dictionary: dict[str, Any]) -> MotionConfig:
+        """Parses a motion config from a dictionary.
+
+        Args:
+            dictionary (dict[str, Any]): Dictionary to parse as a motion config.
+
+        Returns:
+            A motion config containing the information from the given dictionary.
+
+        Raises:
+            ConfigKeyNotFoundError: If one of the required config keys is missing.
+            InvalidConfigValueError: If one of the required config values is invalid.
+        """
         strategy = dictionary.get("strategy")
         if strategy is None:
             raise ConfigKeyNotFoundError("strategy")  # noqa: EM101
@@ -106,6 +157,8 @@ class MotionConfig(pydantic.BaseModel):
 
 
 class NotesEntry(pydantic.BaseModel):
+    """Notes entry from a `.notes.txt` files for a recording session."""
+
     start_time: datetime.datetime
     """Start time of the notes entry recording."""
     end_time: datetime.datetime

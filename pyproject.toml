@@ -157,7 +157,7 @@ select = [
   "PERF",    # Disallow performance anti-patterns
   "E", "W",  # Ensure proper adherence to PEP 8
   "DOC",     # Ensure proper docstrings information
-  # "D",       # Ensure proper docstrings style
+  "D",       # Ensure proper docstrings style
   "F",       # Miscellaenous linting (Pyflakes)
   "PGH",     # Disallow blanket `noqa` and `type: ignore`, and invalid mock access
   # "PL",      # Pylint checks
@@ -174,17 +174,22 @@ ignore = [
   "RET505", "RET506",      # Avoid false posiives (especially with `if-elif` where the `if` returns or raises)
   "TD002", "TD003",        # Don't enforce including an author or issue with TODOs
   "TC003",                 # Don't force the use of `if TYPE_CHECKING` blocks
+  "D100", "D104",          # Allow undocumented modules and packages
+  "D107",                  # Don't force a documented `__init__` since we document it at the class level
 ]
 
 unfixable = [
   "B905",  # Force programmer to decide which strictness to use with `builtins.zip`
 ]
 
+[tool.ruff.lint.flake8-tidy-imports]
+banned-module-level-imports = ["fissa", "sima"]
+
 [tool.ruff.lint.isort]
 force-single-line = true
 
-[tool.ruff.lint.flake8-tidy-imports]
-banned-module-level-imports = ["fissa", "sima"]
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 # `mypy` config
 [tool.mypy]
