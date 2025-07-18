@@ -53,6 +53,9 @@ def collect_paths_from_extensions(
 
         This matches each item of iterable1 against all those of iterable2 and computes
         whether they are the same, then returns if at least one of the matches is True.
+
+        Returns:
+            Whether at least one element is common to both iterables.
         """
         return any(x in iterable2 for x in iterable1)
 
@@ -218,6 +221,9 @@ def get_h5py_compression_parameters(
         valid compression value for `h5py.Group.create_dataset`, acompression_optsa is
         a valid aggression level for 'gzip' compression and `None` otherwise, and
         `shuffle` is whether to do byte-shuffling (only enabled for 'lzf' compression).
+
+    Raises:
+        UnknownCompressionError: If the compression is not supported.
     """
     if compression is None:
         compression_opts = None
@@ -295,6 +301,9 @@ def split_string(string: str, separator: str = ";") -> list[str]:
 
     Returns:
         A list containing the substrings after splitting.
+
+    Raises:
+        SeparatorTooLongError: If the separator is longer than a single character.
 
     Examples:
         >>> split_string("foo;bar")

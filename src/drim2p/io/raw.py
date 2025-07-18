@@ -99,6 +99,12 @@ def parse_metadata_from_ini(
     Returns:
         The config dictionary, as either `dict[str, str]` if untyped, or
         `dict[str, Any]` if typed.
+
+    Raises:
+        NoINISectionsFoundError:
+            If the INI file does not contain any sections ([DEFAULT] excluded).
+        TooManyINISectionsFoundError:
+            If the INI file contains more than one section ([DEFAULT] excluded).
     """
     parser = configparser.ConfigParser()
     parser.read(ini_path)

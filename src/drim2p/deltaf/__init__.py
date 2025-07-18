@@ -286,6 +286,19 @@ def compute_f0(
             Constant value to use when padding using 'constant' mode. Ignored if
             'window_width' is 0.
 
+    Returns:
+        The F0 value for the input array. This is a 0D array if the input is 1D and
+        no rolling window was provided. This is ND, where N is the dimensionality of
+        the input, if a rolling window was provided.
+
+    Raises:
+        ArrayDimensionNotSupportedError: If the input array is not 1- or 2D.
+        OutOfRangePercentileError: If the percentile is not between 0 and 100 inclusive.
+        RollingWindowTooLargeError:
+            If the rolling window is larger than the first dimension of the input minus
+            1.
+        UnknownMethodError: If given an unknown method for computing F0.
+        UnknownPaddingModeError: If given an unknown padding mode.
     """
     # Ensure data is 2D
     got_1d_in = False

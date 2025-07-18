@@ -156,7 +156,7 @@ select = [
   "N",       # Ensure PEP 8 naming conventions
   "PERF",    # Disallow performance anti-patterns
   "E", "W",  # Ensure proper adherence to PEP 8
-  # "DOC",     # Ensure proper docstrings information
+  "DOC",     # Ensure proper docstrings information
   # "D",       # Ensure proper docstrings style
   "F",       # Miscellaenous linting (Pyflakes)
   "PGH",     # Disallow blanket `noqa` and `type: ignore`, and invalid mock access
