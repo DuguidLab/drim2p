@@ -163,7 +163,7 @@ select = [
   # "PL",      # Pylint checks
   "UP",      # Ensure use of up-to-date syntax
   # "FURB",    # Ensure use of up-to-date syntax
-  # "RUF",     # Miscellaneous linting (Ruff)
+  "RUF",     # Miscellaneous linting (Ruff)
   "TRY",     # Ensure good practice for exception handling
 ]
 

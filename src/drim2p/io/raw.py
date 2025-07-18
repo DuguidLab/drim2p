@@ -72,7 +72,7 @@ def parse_ini_config_as_typed(
             continue
 
         # Floats
-        if re.fullmatch("^[0-9.-]+$", value):
+        if re.fullmatch(r"^[0-9.-]+$", value):
             typed[key] = float(value)
             continue
 

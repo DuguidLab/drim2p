@@ -256,7 +256,7 @@ def group_paths_by_regex(
             match.append(path.stem)
         match = match[0]
 
-        groups[match] = groups.get(match, []) + [path]
+        groups[match] = [*groups.get(match, []), path]
 
     return list(groups.values())
 

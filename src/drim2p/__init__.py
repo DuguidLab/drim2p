@@ -59,16 +59,16 @@ def drim2p(verbosity: int = 0, quietness: int = 0, no_colour: bool = False) -> N
 
 def set_up_logging(verbosity: int, quietness: int, no_colour: bool) -> None:
     if no_colour:
-        _formatter = logging.Formatter(
+        formatter = logging.Formatter(
             "[{asctime}] - [{levelname:>9s} ] - {message}",
             style="{",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
     else:
-        _formatter = logs.ColourFormatter()
+        formatter = logs.ColourFormatter()
 
     console_handler = logging.StreamHandler()
-    console_handler.setFormatter(_formatter)
+    console_handler.setFormatter(formatter)
 
     _logger.addHandler(console_handler)
 

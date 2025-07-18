@@ -301,7 +301,7 @@ def _start_roi_gui(
         name="Grouped Z projections",
         visible=projected is None,
     )
-    viewer.dims.current_step = (0,) + viewer.dims.current_step[1:]  # Start at index 0
+    viewer.dims.current_step = (0, *viewer.dims.current_step[1:])  # Start at index 0
 
     # Add ROIs
     viewer.add_shapes(

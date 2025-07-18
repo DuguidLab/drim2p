@@ -264,7 +264,7 @@ Processing time: {time_string}\
         "imaging",
         shape=shape[0:1] + shape[2:4],
         dtype=np.uint16,
-        chunks=(1,) + shape[2:4],
+        chunks=(1, *shape[2:4]),
         compression=compression,
         compression_opts=compression_opts,
         shuffle=shuffle,
