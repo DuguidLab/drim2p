@@ -152,8 +152,7 @@ def filter_paths(
             for filter_ in exclude:
                 if re.findall(filter_, str(path)):
                     break
-                else:
-                    filtered.append(path)
+                filtered.append(path)
 
     return filtered
 

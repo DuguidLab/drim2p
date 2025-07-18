@@ -142,7 +142,7 @@ select = [
   "PT",      # Ensure good practice for pytest-based tests
   "Q",       # Enforce double quotes style
   "RSE",     # Disallow empty parentheses after exceptions
-  # "RET",     # Ensure proper return values
+  "RET",     # Ensure proper return values
   "SLF",     # Disallow use of private members
   "SIM",     # Ensure code is simplified
   "TID253",  # Disallow banned imports at the module level

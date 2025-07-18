@@ -204,7 +204,8 @@ def _extract_signal_for_group(
                 handle.close()
                 continue
 
-            return abort()
+            abort()
+            return
 
         # Check for existing signal extraction
         if handle.get("extracted") and not force:
@@ -217,7 +218,8 @@ def _extract_signal_for_group(
                 handle.close()
                 continue
 
-            return abort()
+            abort()
+            return
 
         # Read ROIs
         rois, _ = io.read_rois_and_shapes(handle)
@@ -227,7 +229,8 @@ def _extract_signal_for_group(
                 handle.close()
                 continue
 
-            return abort()
+            abort()
+            return
 
         handles.append(handle)
         datasets.append(dataset)
@@ -235,7 +238,7 @@ def _extract_signal_for_group(
 
     if len(handles) == 0:
         _logger.error("All files for the current group were skipped.")
-        return None
+        return
 
     experiment = fissa.Experiment(datasets, all_rois)
     # This adds a .result array to experiment which has shape:
