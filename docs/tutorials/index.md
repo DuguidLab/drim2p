@@ -1,4 +1,4 @@
-This tutorial series will guide through step-by-step instructions on how to use `drim2p` as a command-line tool. Tutorials will show you how to prepare you data, motion correct it, draw ROIs, extract and decontaminate signals, compute ΔF/F₀, and do spike inference.
+This tutorial series will guide through step-by-step instructions on how to use `drim2p` as a command-line tool. Tutorials will show you how to prepare you data, motion correct it, draw ROIs, extract and decontaminate signals, and compute ΔF/F₀.
 
 ## Prerequisites
 

@@ -23,4 +23,4 @@ Saved ΔF/F₀.
 
 ## What's next?
 
-The next step is to do [spike inference](spike-inference.md) on the ΔF/F₀ traces.
+This is the final tutorial guiding you through the `drim2p` pipeline. Now that you have ΔF/F₀ traces, you can carry out custom analysis and plotting, or optionally, you can use the provided template for spike inference as described in the [how-to]() guide.

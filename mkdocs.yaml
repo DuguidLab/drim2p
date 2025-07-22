@@ -74,7 +74,6 @@ nav:
       - ROI drawing: tutorials/roi-drawing.md
       - Signal extraction and decontamination: tutorials/signal-extraction-and-decontamination.md
       - ΔF/F₀ computation: tutorials/dff-calculation.md 
-      - Spike inference: tutorials/spike-inference.md
   - Reference:
       - CLI: reference/index.md
       - API: reference/API/

@@ -5,9 +5,8 @@ A typical workflow involves the following steps:
 1. [ROI drawing](#roi-drawing)
 1. [Signal extraction and decontamination](#signal-extraction-and-decontamination)
 1. [ΔF/F₀ computation](#ff0-computation)
-1. [Spike inference](#spike-inference)
 
-This provides a very big overview of what the software provides. For a step-by-step guide going through each of these commands, you should read the [tutorials](tutorials/index.md).
+This provides a very broad overview of what the software provides. For a step-by-step guide going through each of these commands, you should read the [tutorials](tutorials/index.md).
 
 ## Conversion from RAW to HDF5
 
@@ -58,7 +57,3 @@ This step compute ΔF/F₀ for extracted signals.
 ```shell
 drim2p delta /path/to/your/recordings.h
 ```
-
-## Spike inference
-
-TODO
