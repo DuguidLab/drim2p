@@ -4,10 +4,11 @@
 
 from __future__ import annotations
 
+import itertools
 import logging
 import os
 import pathlib
-from typing import Any
+from typing import Any, get_args
 
 import click
 import h5py
@@ -106,10 +107,25 @@ _logger = logging.getLogger(__name__)
     ),
 )
 @click.option(
-    "--no-compression",
+    "-c",
+    "--compression",
     required=False,
-    is_flag=True,
-    help="Whether to disable compression for the output HDF5 files.",
+    type=click.Choice(get_args(io.COMPRESSION), case_sensitive=False),
+    default=None,
+    callback=lambda _, __, x: x if x is None else x.lower(),
+    help="Compression algorithm to use.",
+)
+@click.option(
+    "--aggression",
+    "compression_opts",
+    required=False,
+    type=click.IntRange(0, 9),
+    default=4,
+    help=(
+        "Aggression level to use for GZIP compression. Lower means faster/worse "
+        "compression, higher means slower/better compression. Ignored if "
+        "'--compression' is not GZIP."
+    ),
 )
 @click.option(
     "--generate-timestamps",
@@ -149,7 +165,8 @@ def convert_raw(
     recursive: bool = False,
     include: str | None = None,
     exclude: str | None = None,
-    no_compression: bool = False,
+    compression: io.COMPRESSION | None = None,
+    compression_opts: int | None = None,
     generate_timestamps: bool = False,
     force: bool = False,
 ) -> None:
@@ -187,8 +204,9 @@ def convert_raw(
         exclude (str | None, optional):
             Exclude filters to apply when searching for RAW files. This supports
             regular-expressions. Exclude filters are applied after all include filters.
-        no_compression (bool, optional):
-            Whether to disable compression for the output HDF5 files.
+        compression (io.COMPRESSION | None, optional): Compression algorithm to use.
+        compression_opts (int | None, optional):
+            Compression options to use with the given algorithm.
         generate_timestamps (bool, optional):
             Whether to generate timestamps from the notes entries of the RAW files. A
             ".notes.txt" file should be present along the RAW file when this is set.
@@ -210,6 +228,11 @@ def convert_raw(
             return
         os.makedirs(out, exist_ok=True)
 
+    # Ignore ini_path and xml_path if we are working with a directory
+    if source.is_dir():
+        ini_path = None
+        xml_path = None
+
     for path in raw_paths:
         # Shortcircuit early if we won't write
         out_path = (
@@ -223,49 +246,47 @@ def convert_raw(
             )
             continue
 
-        _logger.debug(f"Converting '{path}'.")
+        _logger.info(f"Converting '{path}'.")
 
         # Retrieve INI metadata
         ini_metadata_path = ini_path or path.with_suffix(".ini")
-        if not ini_metadata_path.exists():
-            _logger.error(
-                f"Failed to retrieve INI metadata for '{path}', skipping file. "
-                f"Make sure it has the same file name as the RAW file "
-                f"and it only has the '.ini' extension.",
-            )
-            continue
-        try:
-            ini_metadata = raw_io.parse_metadata_from_ini(ini_metadata_path, typed=True)
-        except ValueError as e:
-            _logger.warning(
-                f"Failed to parse INI metadata for '{ini_metadata_path}': \n{e}."
-            )
-            continue
+        ini_metadata = {}
+        if ini_metadata_path.exists():
+            try:
+                ini_metadata = raw_io.parse_metadata_from_ini(
+                    ini_metadata_path, typed=True
+                )
+            except ValueError as e:
+                _logger.warning(e)
+        else:
+            _logger.debug(f"No INI metadata found for '{path}'.")
 
         # Retrieve XML metadata
-        xml_string = ini_metadata.get("ome.xml.string")
+        xml_string = None
+        if ini_metadata:
+            xml_string = ini_metadata.get("ome.xml.string")
+            if xml_string is None:
+                _logger.debug(
+                    "Failed to retrieve XML metadata from INI metadata. Trying to use "
+                    "the XML file directly."
+                )
+            else:
+                _logger.debug("Using XML string from INI file.")
+
         if xml_string is None:
-            _logger.debug(
-                "Failed to retrieve XML metadata from INI file. Trying to use the XML "
-                "file directly."
-            )
-            xml_metadata_path = xml_path or path.with_stem(
-                path.stem.replace("XYT", "OME")
-            ).with_suffix(".xml")
-            if not xml_metadata_path.exists():
+            xml_metadata_path = xml_path or _find_xml_path(path)
+            if xml_metadata_path is None or not xml_metadata_path.exists():
+                _logger.debug(f"No XML metadata found for '{path}'.")
                 _logger.error(
                     f"Failed to retrieve OME-XML metadata from INI file or directly "
-                    f"through XML file for '{path}', skipping file. "
+                    f"through XML file for '{path}', skipping RAW file. "
                     f"To use the XML file, make sure it has the same file name as the "
-                    f"RAW file with XYT replaced with OME, and it only has the '.xml' "
-                    f"extension."
+                    f"RAW file with the '.xml' or '.ome.xml' extension(s)."
                 )
                 continue
-            else:
-                _logger.debug("Using XML string from XML file.")
-                xml_string = xml_metadata_path.open().read()
-        else:
-            _logger.debug("Using XML string from INI file.")
+
+            _logger.debug("Using XML string from XML file.")
+            xml_string = xml_metadata_path.open().read()
 
         shape, dtype = raw_io.parse_metadata_from_ome(xml_string)
 
@@ -279,8 +300,14 @@ def convert_raw(
         array = raw_io.read_raw_as_numpy(path, shape, dtype)
 
         # Output as HDF5
-        _logger.debug(f"Writing to HDF5 ({out_path}).")
-        compression = None if no_compression else "lzf"
+        compression, compression_opts, shuffle = io.get_h5py_compression_parameters(
+            compression, compression_opts
+        )
+
+        _logger.debug(
+            f"Writing HDF5 to '{out_path}' "
+            f"({compression=}, {compression_opts=}, {shuffle=})."
+        )
         with h5py.File(out_path, "w") as handle:
             dataset = handle.create_dataset(
                 "data",
@@ -288,7 +315,8 @@ def convert_raw(
                 # Chunk per frame, same for writing but speeds up reading a lot
                 chunks=(1, *shape[1:]),
                 compression=compression,
-                shuffle=True,
+                compression_opts=compression_opts,
+                shuffle=shuffle,
             )
 
             for key, value in ini_metadata.items():
@@ -299,8 +327,11 @@ def convert_raw(
                     "timestamps",
                     data=timestamps,
                     compression=compression,
-                    shuffle=True,
+                    compression_opts=compression_opts,
+                    shuffle=shuffle,
                 )
+
+        _logger.info(f"Finished converting '{path}'.")
 
 
 def _generate_timestamps(
@@ -334,9 +365,9 @@ def _generate_timestamps(
     frame_count = ini_metadata.get("frame.count")
     if frame_count is None:
         _logger.error(
-            f"Requested to generate timestamps but frame count could "
-            f"not be retrieved from INI metadata. Skipping timestamp "
-            f"generation."
+            "Requested to generate timestamps but frame count could "
+            "not be retrieved from INI metadata. Skipping timestamp "
+            "generation."
         )
         return None
 
@@ -361,3 +392,14 @@ def generate_timestamps_for_note_entry(
     frame_spacing = delta / frame_count
 
     return np.array([i * frame_spacing for i in range(frame_count)])
+
+
+def _find_xml_path(path: pathlib.Path) -> pathlib.Path | None:
+    stems = [path.stem, path.stem.replace("XYT", "OME")]
+    suffixes = [".xml", ".ome.xml"]
+    for stem, suffix in itertools.product(stems, suffixes):
+        candidate_path = path.with_stem(stem).with_suffix(suffix)
+        if candidate_path.exists():
+            return candidate_path
+
+    return None

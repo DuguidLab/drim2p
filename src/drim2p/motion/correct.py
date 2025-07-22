@@ -6,12 +6,11 @@ import logging
 import pathlib
 import shutil
 import time
-from typing import Any
+from typing import Any, get_args
 
 import click
 import h5py
 import numpy as np
-import sima
 
 from drim2p import cli_utils, io, models
 
@@ -77,6 +76,27 @@ _logger = logging.getLogger(__name__)
     ),
 )
 @click.option(
+    "-c",
+    "--compression",
+    required=False,
+    type=click.Choice(get_args(io.COMPRESSION), case_sensitive=False),
+    default=None,
+    callback=lambda _, __, x: x if x is None else x.lower(),
+    help="Compression algorithm to use.",
+)
+@click.option(
+    "--aggression",
+    "compression_opts",
+    required=False,
+    type=click.IntRange(0, 9),
+    default=4,
+    help=(
+        "Aggression level to use for GZIP compression. Lower means faster/worse "
+        "compression, higher means slower/better compression. Ignored if "
+        "'--compression' is not GZIP."
+    ),
+)
+@click.option(
     "--force",
     required=False,
     is_flag=True,
@@ -99,6 +119,8 @@ def apply_motion_correction(
     include: str | None = None,
     exclude: str | None = None,
     strict_filters: bool = False,
+    compression: io.COMPRESSION | None = None,
+    compression_opts: int | None = None,
     force: bool = False,
 ) -> None:
     """Applies motion correction on HDF5 chunks.
@@ -124,6 +146,9 @@ def apply_motion_correction(
         strict_filters (bool, optional):
             Whether files not matching any include filter should be excluded, regardless
             of exclude filters. This is ignored if no include filters are provided.
+        compression (io.COMPRESSION | None, optional): Compression algorithm to use.
+        compression_opts (int | None, optional):
+            Compression options to use with the given algorithm.
         force (bool, optional): Whether to ovewrite output datasets if they exist.
     """
     if settings_path is None:
@@ -136,12 +161,19 @@ def apply_motion_correction(
     for path in io.find_paths(source, [".h5"], include, exclude, recursive, True):
         _logger.debug(f"Motion correcting '{path}'.")
 
-        _apply_motion_correction(path, settings, force)
+        _apply_motion_correction(path, settings, compression, compression_opts, force)
 
 
 def _apply_motion_correction(
-    path: pathlib.Path, settings: models.MotionConfig, force: bool = False
+    path: pathlib.Path,
+    settings: models.MotionConfig,
+    compression: io.COMPRESSION | None,
+    compression_opts: int | None,
+    force: bool = False,
 ) -> None:
+    # Lazy time-consuming import
+    import sima
+
     # Keep own handle to check for motion correction dataset
     file = h5py.File(path, "a", locking=False)
 
@@ -212,27 +244,32 @@ Processing time: {time_string}\
         _logger.debug(f"Removing existing 'imaging' dataset from '{path}'.")
         del file["imaging"]
 
-    _logger.debug(f"Saving 'imaging' dataset to '{path}'.")
+    compression, compression_opts, shuffle = io.get_h5py_compression_parameters(
+        compression, compression_opts
+    )
+    _logger.debug(
+        f"Saving 'imaging' dataset to '{path}' "
+        f"({compression=}, {compression_opts=}, {shuffle=})."
+    )
+
     # Manually save the motion-corrected sequence instead of using dataset.export_frames
     # to avoid extra dimensions, and because we're a bit faster when working with larger
-    # files.
+    # files, and because SIMA saves it as float64 with no decimal part (?) and we can
+    # save 3/4 of the space by keeping it uint16.
     sequence = dataset.sequences[0]
     shape = sequence.shape
-    file_dataset = None
+    file_dataset = file.create_dataset(
+        "imaging",
+        shape=shape[0:1] + shape[2:4],
+        dtype=np.uint16,
+        chunks=(1,) + shape[2:4],
+        compression=compression,
+        compression_opts=compression_opts,
+        shuffle=shuffle,
+    )
     for i, frame in enumerate(iter(sequence)):
-        if file_dataset is None:
-            # Delay creation so we can get the frame datatype. We could use
-            # dataset._dataset.dtype but that only works for HDF5 datasets and might
-            # as well not lock ourselves into that.
-            file_dataset = file.create_dataset(
-                "imaging",
-                shape=shape[0:1] + shape[2:4],
-                dtype=frame.dtype,
-                chunks=(1,) + shape[2:4],
-                compression="lzf",
-                shuffle=True,
-            )
-        file_dataset[i] = frame.squeeze()
+        # No need to use `np.round` as the decimal part is seemingly always 0
+        file_dataset[i] = frame.squeeze().astype(np.uint16)
 
     _logger.debug("Saving displacements.")
     np.savez_compressed(

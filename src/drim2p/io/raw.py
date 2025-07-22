@@ -101,13 +101,20 @@ def parse_metadata_from_ini(
     parser = configparser.ConfigParser()
     parser.read(ini_path)
 
-    if "_" not in parser.sections():
+    sections = parser.sections()
+    if len(sections) < 1:
+        raise ValueError(
+            f"Failed to parse metadata from INI file '{ini_path}': no sections found."
+        )
+    elif len(sections) > 1:
         raise ValueError(
             f"Failed to parse metadata from INI file '{ini_path}': "
-            f"missing '_' section.",
+            f"too many sections found, only a single section (other than [DEFAULT]) "
+            f"is supported."
         )
+    section = sections[0]
 
-    config = dict(parser["_"])
+    config = dict(parser[section])
     return config if not typed else parse_ini_config_as_typed(config)
 
 

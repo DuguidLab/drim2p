@@ -7,7 +7,7 @@ import sys
 
 import click
 
-from drim2p import convert, deltaf, draw, extract, logging_, motion
+from drim2p import convert, deltaf, draw, extract, logs, motion
 
 _logger = logging.getLogger("drim2p")
 
@@ -19,9 +19,18 @@ _logger = logging.getLogger("drim2p")
     "verbosity",
     required=False,
     count=True,
+    help="Set verbosity level. Level 0 is INFO (default). Level 1 is DEBUG.",
+)
+@click.option(
+    "-q",
+    "--quiet",
+    "quietness",
+    required=False,
+    count=True,
     help=(
-        "Set verbosity level. Level 0 is WARNING (default). Level 1 is INFO. "
-        "Level 2 is DEBUG."
+        "Suppress log output. One '--quiet' suppresses INFO messages. Two '--quiet' "
+        "and up suppresses WARNING messages."
+        "This overrides verbosity set using '--verbose'."
     ),
 )
 @click.option(
@@ -30,7 +39,7 @@ _logger = logging.getLogger("drim2p")
     is_flag=True,
     help="Disable logging colours.",
 )
-def drim2p(verbosity: int = 0, no_colour: bool = False) -> None:
+def drim2p(verbosity: int = 0, quietness: int = 0, no_colour: bool = False) -> None:
     """A dreamy 2-photon imaging processing pipeline.
     \f
 
@@ -40,10 +49,10 @@ def drim2p(verbosity: int = 0, no_colour: bool = False) -> None:
             Verbosity level. Level 0 is WARNING (default). Level 1 is INFO. Level 2 is
             DEBUG.
     """
-    set_up_logging(verbosity, no_colour)
+    set_up_logging(verbosity, quietness, no_colour)
 
 
-def set_up_logging(level: int, no_colour: bool) -> None:
+def set_up_logging(verbosity: int, quietness: int, no_colour: bool) -> None:
     if no_colour:
         _formatter = logging.Formatter(
             "[{asctime}] - [{levelname:>9s} ] - {message}",
@@ -51,16 +60,22 @@ def set_up_logging(level: int, no_colour: bool) -> None:
             datefmt="%Y-%m-%d %H:%M:%S",
         )
     else:
-        _formatter = logging_.ColourFormatter()
+        _formatter = logs.ColourFormatter()
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(_formatter)
 
     _logger.addHandler(console_handler)
 
-    if level == 1:
+    # Quietness overrides verbosity
+    level = -quietness if quietness > 0 else verbosity
+    if level <= -2:
+        _logger.setLevel(logging.ERROR)
+    elif level == -1:
+        _logger.setLevel(logging.WARNING)
+    elif level == 0:
         _logger.setLevel(logging.INFO)
-    elif level > 1:
+    elif level >= 1:
         _logger.setLevel(logging.DEBUG)
 
 
