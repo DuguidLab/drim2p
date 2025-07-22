@@ -2,14 +2,19 @@
 #
 # SPDX-License-Identifier: MIT
 
-from collections.abc import Iterable
 import logging
 import pathlib
 import re
-from typing import Any, Literal, get_args
+from collections.abc import Iterable
+from typing import Any
+from typing import Literal
+from typing import get_args
 
 import h5py
 import numpy as np
+
+from drim2p.io.errors import SeparatorTooLongError
+from drim2p.io.errors import UnknownCompressionError
 
 _logger = logging.getLogger(__name__)
 
@@ -48,8 +53,11 @@ def collect_paths_from_extensions(
 
         This matches each item of iterable1 against all those of iterable2 and computes
         whether they are the same, then returns if at least one of the matches is True.
+
+        Returns:
+            Whether at least one element is common to both iterables.
         """
-        return any(map(lambda x: x in iterable2, iterable1))
+        return any(x in iterable2 for x in iterable1)
 
     collected = []
 
@@ -68,11 +76,10 @@ def collect_paths_from_extensions(
             collected.extend(
                 collect_paths_from_extensions(path, extensions, recursive, strict)
             )
-        else:
-            if have_at_least_one_common_element(
-                extensions, [path.suffix] if strict else path.suffixes
-            ):
-                collected.append(path)
+        elif have_at_least_one_common_element(
+            extensions, [path.suffix] if strict else path.suffixes
+        ):
+            collected.append(path)
 
     return collected
 
@@ -134,8 +141,8 @@ def filter_paths(
     if include is not None:
         included = []
         for path in paths:
-            for filter in include:
-                if re.findall(filter, str(path)):
+            for filter_ in include:
+                if re.findall(filter_, str(path)):
                     included.append(path)
                     break
 
@@ -144,11 +151,10 @@ def filter_paths(
     if exclude is not None:
         filtered = []
         for path in included:
-            for filter in exclude:
-                if re.findall(filter, str(path)):
+            for filter_ in exclude:
+                if re.findall(filter_, str(path)):
                     break
-                else:
-                    filtered.append(path)
+                filtered.append(path)
 
     return filtered
 
@@ -214,6 +220,9 @@ def get_h5py_compression_parameters(
         valid compression value for `h5py.Group.create_dataset`, acompression_optsa is
         a valid aggression level for 'gzip' compression and `None` otherwise, and
         `shuffle` is whether to do byte-shuffling (only enabled for 'lzf' compression).
+
+    Raises:
+        UnknownCompressionError: If the compression is not supported.
     """
     if compression is None:
         compression_opts = None
@@ -225,10 +234,7 @@ def get_h5py_compression_parameters(
         compression_opts = None
         shuffle = True
     else:
-        raise ValueError(
-            f"Unknown compression value: '{compression}'. "
-            f"Allowed values are: {', '.join(get_args(COMPRESSION))}, None."
-        )
+        raise UnknownCompressionError(compression, (*get_args(COMPRESSION), None))
 
     return compression, compression_opts, shuffle
 
@@ -249,13 +255,13 @@ def group_paths_by_regex(
     """
     matches = [re.findall(group_by_regex, path.stem) for path in paths]
     groups: dict[str, list[pathlib.Path]] = {}
-    for match, path in zip(matches, paths):
+    for match, path in zip(matches, paths, strict=True):
         if len(match) == 0:
             # If no matches found, default to a group of size 1 with the current path
             match.append(path.stem)
-        match = match[0]
+        match = match[0]  # noqa: PLW2901
 
-        groups[match] = groups.get(match, []) + [path]
+        groups[match] = [*groups.get(match, []), path]
 
     return list(groups.values())
 
@@ -263,6 +269,16 @@ def group_paths_by_regex(
 def read_rois_and_shapes(
     root: h5py.Group,
 ) -> tuple[list[np.ndarray[Any, np.dtype[np.number]]], list[str]]:
+    """Reads ROI arrays and shapes from an HDF5 group.
+
+    Args:
+        root (h5py.Group): Group that contains the ROIs and their shapes.
+
+    Returns:
+        A tuple of (rois, shapes) where `rois` is a list of NumPy arrays containing the
+        vertices of the ROIs (of shape (X, 2) where X is the number of ROIs), and
+        `shapes` is a list of string values for the shapes of the ROIs.
+    """
     rois = []
     roi_shape_types = []
     roi_group = root.get("ROIs")
@@ -295,6 +311,9 @@ def split_string(string: str, separator: str = ";") -> list[str]:
     Returns:
         A list containing the substrings after splitting.
 
+    Raises:
+        SeparatorTooLongError: If the separator is longer than a single character.
+
     Examples:
         >>> split_string("foo;bar")
         ['foo', 'bar']
@@ -306,7 +325,7 @@ def split_string(string: str, separator: str = ";") -> list[str]:
         ['foo', 'bar', 'foo\\;bar']
     """
     if len(separator) > 1:
-        raise ValueError(f"Separator should be a single character. Got '{separator}'.")
+        raise SeparatorTooLongError(separator)
 
     return re.split(
         rf"(?<!(?<!\\)\\){separator}", string

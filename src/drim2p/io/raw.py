@@ -6,12 +6,14 @@ import configparser
 import datetime
 import pathlib
 import re
-from typing import Any
 import warnings
+from typing import Any
 
 import numpy as np
 
 from drim2p import models
+from drim2p.io.errors import NoINISectionsFoundError
+from drim2p.io.errors import TooManyINISectionsFoundError
 
 NOTES_ENTRY_PATTERN = re.compile(r"^-+$\n((?:.|\n)+?)\n^-+$\n", flags=re.MULTILINE)
 """Pattern of a notes entry. It consists of lines of text between two lines of '-'s."""
@@ -30,7 +32,7 @@ def parse_metadata_from_ome(
         A tuple of the (`shape`, `dtype``) of the RAW file, where `shape` is the shape
         in ZYX order, and `dtype` is the numpy data type with the correct byte order.
     """
-    # Lazy import as this adds about a second to a NO-OP run of the CLI on my machine
+    # Lazy time-consuming import
     import ome_types
 
     # Silence `UserWarning`s for potentially invalid IDs that are automatically cast
@@ -41,7 +43,7 @@ def parse_metadata_from_ome(
 
     shape = pixels.size_t, pixels.size_y, pixels.size_x
     dtype = np.dtype(pixels.type.numpy_dtype).newbyteorder(
-        ">" if pixels.big_endian or True else "<"
+        ">" if pixels.big_endian else "<"
     )
 
     return shape, dtype
@@ -70,12 +72,12 @@ def parse_ini_config_as_typed(
             continue
 
         # Floats
-        if re.fullmatch("^[0-9.-]+$", value):
+        if re.fullmatch(r"^[0-9.-]+$", value):
             typed[key] = float(value)
             continue
 
         # Booleans
-        if value in ["FALSE", "TRUE"]:
+        if value in {"FALSE", "TRUE"}:
             typed[key] = value == "TRUE"
             continue
 
@@ -97,21 +99,21 @@ def parse_metadata_from_ini(
     Returns:
         The config dictionary, as either `dict[str, str]` if untyped, or
         `dict[str, Any]` if typed.
+
+    Raises:
+        NoINISectionsFoundError:
+            If the INI file does not contain any sections ([DEFAULT] excluded).
+        TooManyINISectionsFoundError:
+            If the INI file contains more than one section ([DEFAULT] excluded).
     """
     parser = configparser.ConfigParser()
     parser.read(ini_path)
 
     sections = parser.sections()
     if len(sections) < 1:
-        raise ValueError(
-            f"Failed to parse metadata from INI file '{ini_path}': no sections found."
-        )
+        raise NoINISectionsFoundError(ini_path)
     elif len(sections) > 1:
-        raise ValueError(
-            f"Failed to parse metadata from INI file '{ini_path}': "
-            f"too many sections found, only a single section (other than [DEFAULT]) "
-            f"is supported."
-        )
+        raise TooManyINISectionsFoundError(ini_path, sections)
     section = sections[0]
 
     config = dict(parser[section])

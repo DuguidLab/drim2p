@@ -14,7 +14,8 @@ import h5py
 import napari
 import numpy as np
 
-from drim2p import cli_utils, io
+from drim2p import cli_utils
+from drim2p import io
 
 _logger = logging.getLogger(__name__)
 
@@ -228,8 +229,8 @@ def draw_roi(
                 _logger.debug("'force' was set. Skipping looking for existing ROIs.")
 
             # Merge template and existing
-            rois = rois + template_rois
-            roi_shape_types = roi_shape_types + template_roi_shape_types
+            rois += template_rois
+            roi_shape_types += template_roi_shape_types
 
             # If a template is used on a file twice or more, it will generate
             # duplicates.
@@ -256,9 +257,11 @@ def draw_roi(
             _logger.debug("Saving ROIs.")
             roi_group = handle.create_group("ROIs")
             roi_shape_types = []
-            for index, (roi, shape_type) in enumerate(zip(rois.data, rois.shape_type)):
+            for index, (roi, shape_type) in enumerate(
+                zip(rois.data, rois.shape_type, strict=True)
+            ):
                 # Discard line and path ROIs
-                if shape_type not in ("rectangle", "ellipse", "polygon"):
+                if shape_type not in {"rectangle", "ellipse", "polygon"}:
                     _logger.error(
                         f"ROI {index} has an unssuported shape type '{shape_type}'. "
                         f"Discarding it."
@@ -298,7 +301,7 @@ def _start_roi_gui(
         name="Grouped Z projections",
         visible=projected is None,
     )
-    viewer.dims.current_step = (0,) + viewer.dims.current_step[1:]  # Start at index 0
+    viewer.dims.current_step = (0, *viewer.dims.current_step[1:])  # Start at index 0
 
     # Add ROIs
     viewer.add_shapes(
@@ -333,7 +336,8 @@ def _remove_duplicates(
     rois: list[np.ndarray[Any, np.dtype[np.number]]],
     roi_shape_types: list[str],
 ) -> tuple[list[np.ndarray[Any, np.dtype[np.number]]], list[str]]:
-    if len(rois) < 2:
+    # If we have fewer than 2 ROIs, return early
+    if len(rois) < 2:  # noqa: PLR2004
         return rois, roi_shape_types
 
     i = 1
@@ -341,7 +345,7 @@ def _remove_duplicates(
         current = rois[i]
         # Check if current ROI is a duplicate of any of the previous ones
         if any(
-            (np.all(current == roi) for roi in rois[:i] if current.shape == roi.shape)
+            np.all(current == roi) for roi in rois[:i] if current.shape == roi.shape
         ):
             rois.pop(i)
             roi_shape_types.pop(i)

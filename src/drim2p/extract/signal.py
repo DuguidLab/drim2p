@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: © 2025 Olivier Delrée <olivierdelree@protonmail.com>
+#
+# SPDX-License-Identifier: MIT
+
 import logging
 import pathlib
 from typing import Any
@@ -5,7 +9,8 @@ from typing import Any
 import click
 import h5py
 
-from drim2p import cli_utils, io
+from drim2p import cli_utils
+from drim2p import io
 
 _logger = logging.getLogger(__name__)
 
@@ -175,7 +180,7 @@ def _extract_signal_for_group(
 
     _logger.info(
         f"Extracting and decontaminating signal for "
-        f"'{", '".join(map(lambda x: x.stem, group))}'."
+        f"'{", '".join(x.stem for x in group)}'."
     )
 
     skip_or_abort_message = (
@@ -203,7 +208,8 @@ def _extract_signal_for_group(
                 handle.close()
                 continue
 
-            return abort()
+            abort()
+            return
 
         # Check for existing signal extraction
         if handle.get("extracted") and not force:
@@ -216,7 +222,8 @@ def _extract_signal_for_group(
                 handle.close()
                 continue
 
-            return abort()
+            abort()
+            return
 
         # Read ROIs
         rois, _ = io.read_rois_and_shapes(handle)
@@ -226,7 +233,8 @@ def _extract_signal_for_group(
                 handle.close()
                 continue
 
-            return abort()
+            abort()
+            return
 
         handles.append(handle)
         datasets.append(dataset)
@@ -238,7 +246,7 @@ def _extract_signal_for_group(
 
     experiment = fissa.Experiment(datasets, all_rois)
     # This adds a .result array to experiment which has shape:
-    # (ROI, trial)(signal, timepoint)
+    # (ROI, trial)(signal, timepoint)  # noqa: ERA001
     # where:
     #     ROI is the ROI index,
     #     trial is the dataset index

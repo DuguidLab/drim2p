@@ -6,15 +6,17 @@ from __future__ import annotations
 
 import itertools
 import logging
-import os
 import pathlib
-from typing import Any, get_args
+from typing import Any
+from typing import get_args
 
 import click
 import h5py
 import numpy as np
 
-from drim2p import cli_utils, io, models
+from drim2p import cli_utils
+from drim2p import io
+from drim2p import models
 from drim2p.io import raw as raw_io
 
 _logger = logging.getLogger(__name__)
@@ -217,16 +219,18 @@ def convert_raw(
 
     # If we are going to process at least a file, ensure the output directory exists
     if len(raw_paths) > 0 and out is not None:
-        # First, ensure the parent of out exists. We should only support creating a
-        # single directory, not a nested hierarchy as a single typo in a path can result
-        # in a lot of folders being created in a way a user might not expect.
-        if not out.parent.exists():
-            _logger.error(
+        # Only allow creating a directory inside an existing parent. We should only
+        # support creating a single directory, not a nested hierarchy as a single typo
+        # in a path can result in a lot of folders being created in a way a user might
+        # not expect.
+        try:
+            out.mkdir(exist_ok=True)
+        except FileNotFoundError:
+            _logger.exception(
                 f"Neither provided output directory '{out}' nor its parent exist. "
                 f"Aborting."
             )
             return
-        os.makedirs(out, exist_ok=True)
 
     # Ignore ini_path and xml_path if we are working with a directory
     if source.is_dir():

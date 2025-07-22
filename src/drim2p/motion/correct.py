@@ -6,13 +6,16 @@ import logging
 import pathlib
 import shutil
 import time
-from typing import Any, get_args
+from typing import Any
+from typing import get_args
 
 import click
 import h5py
 import numpy as np
 
-from drim2p import cli_utils, io, models
+from drim2p import cli_utils
+from drim2p import io
+from drim2p import models
 
 _logger = logging.getLogger(__name__)
 
@@ -118,7 +121,6 @@ def apply_motion_correction(
     recursive: bool = False,
     include: str | None = None,
     exclude: str | None = None,
-    strict_filters: bool = False,
     compression: io.COMPRESSION | None = None,
     compression_opts: int | None = None,
     force: bool = False,
@@ -143,9 +145,6 @@ def apply_motion_correction(
         exclude (str | None, optional):
             Exclude filters to apply when searching for HDF5 files. This supports
             regular-expressions. Exclude filters are applied after all include filters.
-        strict_filters (bool, optional):
-            Whether files not matching any include filter should be excluded, regardless
-            of exclude filters. This is ignored if no include filters are provided.
         compression (io.COMPRESSION | None, optional): Compression algorithm to use.
         compression_opts (int | None, optional):
             Compression options to use with the given algorithm.
@@ -200,7 +199,8 @@ def _apply_motion_correction(
                 max_displacement=settings.displacement
             )
         case _:
-            raise NotImplementedError(f"Strategy '{settings.strategy}' not implemented")
+            message = f"Strategy '{settings.strategy}' not implemented"  # type: ignore[unreachable]
+            raise NotImplementedError(message)
 
     # Start motion correction
     _logger.info(
@@ -234,9 +234,11 @@ Strategy: {settings.strategy.name}
 Displacement: {list(settings.displacement)}
 Processing time: {time_string}\
     """
-    with open(
-        path.with_stem(path.stem + "_motion_correction_report").with_suffix(".txt"), "w"
-    ) as handle:
+    with (
+        path.with_stem(path.stem + "_motion_correction_report")
+        .with_suffix(".txt")
+        .open("w") as handle
+    ):
         handle.write(report_string)
 
     # Save motion corrected dataset and displacements
@@ -262,7 +264,7 @@ Processing time: {time_string}\
         "imaging",
         shape=shape[0:1] + shape[2:4],
         dtype=np.uint16,
-        chunks=(1,) + shape[2:4],
+        chunks=(1, *shape[2:4]),
         compression=compression,
         compression_opts=compression_opts,
         shuffle=shuffle,

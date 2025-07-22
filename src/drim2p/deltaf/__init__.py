@@ -4,16 +4,28 @@
 
 import logging
 import pathlib
-from typing import Any, Literal, get_args
+from typing import Any
+from typing import Literal
+from typing import get_args
 
 import click
 import h5py
 import numpy as np
 import numpy.typing as npt
 
-from drim2p import cli_utils, io
+from drim2p import cli_utils
+from drim2p import io
+from drim2p.deltaf.errors import ArrayDimensionNotSupportedError
+from drim2p.deltaf.errors import InvalidPercentileError
+from drim2p.deltaf.errors import OutOfRangePercentileError
+from drim2p.deltaf.errors import RollingWindowTooLargeError
+from drim2p.deltaf.errors import UnknownMethodError
+from drim2p.deltaf.errors import UnknownPaddingModeError
 
 _logger = logging.getLogger(__name__)
+
+_1Dimensional = 1
+_2Dimensional = 2
 
 _F0Method = Literal["percentile", "mean", "median"]
 _PaddingMode = Literal["constant", "reflect", "wrap", "edge"]
@@ -277,31 +289,37 @@ def compute_f0(
             Constant value to use when padding using 'constant' mode. Ignored if
             'window_width' is 0.
 
+    Returns:
+        The F0 value for the input array. This is a 0D array if the input is 1D and
+        no rolling window was provided. This is ND, where N is the dimensionality of
+        the input, if a rolling window was provided.
+
+    Raises:
+        ArrayDimensionNotSupportedError: If the input array is not 1- or 2D.
+        OutOfRangePercentileError: If the percentile is not between 0 and 100 inclusive.
+        RollingWindowTooLargeError:
+            If the rolling window is larger than the first dimension of the input minus
+            1.
+        UnknownMethodError: If given an unknown method for computing F0.
+        UnknownPaddingModeError: If given an unknown padding mode.
     """
     # Ensure data is 2D
     got_1d_in = False
-    if len(array.shape) > 2 or len(array.shape) < 1:
-        raise ValueError(
-            f"Only 2D arrays are supported. Got {len(array.shape)}D array."
-        )
+    if len(array.shape) > _2Dimensional or len(array.shape) < _1Dimensional:
+        raise ArrayDimensionNotSupportedError(len(array.shape))
     elif len(array.shape) == 1:
         got_1d_in = True
         array = array.reshape(-1, 1)
 
     if method == "percentile":
-        if not 0 <= percentile <= 100:
-            raise ValueError(
-                f"Percentile should be between 0 and 100. Got '{percentile}'. "
-            )
+        if not 0 <= percentile <= 100:  # noqa: PLR2004
+            raise OutOfRangePercentileError(percentile)
     # 'median' is a convenience method for percentile=50
     elif method == "median":
         method = "percentile"
         percentile = 50
     elif method not in get_args(_F0Method):
-        raise ValueError(
-            f"Unknown method: '{method}'. "
-            f"Valid methods are: {", ".join(get_args(_F0Method))}"
-        )
+        raise UnknownMethodError(method, get_args(_F0Method))
 
     # No rolling window, compute single value along first axis and be done
     if window_width <= 0:
@@ -316,11 +334,7 @@ def compute_f0(
     # We have a rolling window
     # Ensure the rolling window is small enough
     if window_width > array.shape[0] * 2 - 1:
-        raise ValueError(
-            f"Rolling window width should be at most twice the length of the first "
-            f"dimension of the input minus 1. Got '{window_width}' which is larger "
-            f"than {array.shape[0] * 2 - 1}."
-        )
+        raise RollingWindowTooLargeError(window_width, array.shape[0])
 
     # Ensure the window_width is odd so that it can be applied on integer indices
     if window_width % 2 == 0:
@@ -330,10 +344,7 @@ def compute_f0(
     # than half of the window_width. We can't normally compute them as the window
     # does not have enough information around the edges.
     if padding_mode not in get_args(_PaddingMode):
-        raise ValueError(
-            f"Unknown padding mode '{padding_mode}'. "
-            f"Valid modes are: {", ".join(get_args(_PaddingMode))}."
-        )
+        raise UnknownPaddingModeError(padding_mode, get_args(_PaddingMode))
     # Passing kwarg `constant_values` for methods other than "constant" raises a
     # ValueError.
     kwargs = {}
@@ -375,7 +386,8 @@ def _compute_f0(
 ) -> npt.NDArray[Any]:
     f0: npt.NDArray[Any]
     if method == "percentile":
-        assert percentile is not None, "Cannot compute percentile when it is `None`."
+        if percentile is None:
+            raise InvalidPercentileError(percentile)
         f0 = np.percentile(array, percentile, axis=0)
     elif method == "mean":
         f0 = np.mean(array, axis=0)

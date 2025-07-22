@@ -5,6 +5,7 @@
 """Custom logging functionality helpers."""
 
 import logging
+from typing import ClassVar
 
 
 class ColourFormatter(logging.Formatter):
@@ -21,7 +22,7 @@ class ColourFormatter(logging.Formatter):
 
     formatting = "[{asctime}] - [{levelname:>9s} ] - {message}"
 
-    FORMATS = {
+    FORMATS: ClassVar[dict[int, str]] = {
         logging.DEBUG: formatting,
         logging.INFO: formatting,
         logging.WARNING: yellow + formatting + reset,
@@ -30,6 +31,14 @@ class ColourFormatter(logging.Formatter):
     }
 
     def format(self, record: logging.LogRecord) -> str:
+        """Formats the given record as a string.
+
+        Args:
+            record (logging.LogRecord): Record to format.
+
+        Returns:
+            The record formatter as a string.
+        """
         log_format = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(
             log_format, style="{", datefmt="%Y-%m-%d %H:%M:%S"

@@ -1,15 +1,29 @@
-#  SPDX-FileCopyrightText: © 2025 Olivier Delrée <olivierdelree@protonmail.com>
+# SPDX-FileCopyrightText: © 2025 Olivier Delrée <olivierdelree@protonmail.com>
 #
-#  SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: MIT
 
 import logging
 import sys
 
 import click
 
-from drim2p import convert, deltaf, draw, extract, logs, motion
+from drim2p import convert
+from drim2p import deltaf
+from drim2p import draw
+from drim2p import extract
+from drim2p import logs
+from drim2p import motion
 
 _logger = logging.getLogger("drim2p")
+
+
+class LoggingVerbosity:
+    """Verbosity level of the package logging."""
+
+    ERROR = -2
+    WARNING = -1
+    INFO = 0
+    DEBUG = 1
 
 
 @click.group(invoke_without_command=True)
@@ -44,38 +58,50 @@ def drim2p(verbosity: int = 0, quietness: int = 0, no_colour: bool = False) -> N
     \f
 
     Args:
-        no_colour (bool, optional): Whether to disable logging colours.
         verbosity (int, optional):
-            Verbosity level. Level 0 is WARNING (default). Level 1 is INFO. Level 2 is
-            DEBUG.
-    """
+            Verbosity level. Level 0 is INFO (default). Level 1 is DEBUG.
+        quietness (int, optional):
+            Quietness level. Level 0 suppresses INFO messages. Level 1 suppresses
+            WARNING messages.
+        no_colour (bool, optional): Whether to disable logging colours.
+    """  # noqa: D205, D301, D415
     set_up_logging(verbosity, quietness, no_colour)
 
 
 def set_up_logging(verbosity: int, quietness: int, no_colour: bool) -> None:
+    """Sets the logging level package.
+
+    Args:
+        verbosity (int):
+            Verbosity level. Level 0 is INFO (default). Level 1 is DEBUG.
+        quietness (int):
+            Quietness level. Level 0 suppresses INFO messages. Level 1 suppresses
+            WARNING messages.
+        no_colour (bool): Whether to disable logging colours.
+    """
     if no_colour:
-        _formatter = logging.Formatter(
+        formatter = logging.Formatter(
             "[{asctime}] - [{levelname:>9s} ] - {message}",
             style="{",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
     else:
-        _formatter = logs.ColourFormatter()
+        formatter = logs.ColourFormatter()
 
     console_handler = logging.StreamHandler()
-    console_handler.setFormatter(_formatter)
+    console_handler.setFormatter(formatter)
 
     _logger.addHandler(console_handler)
 
     # Quietness overrides verbosity
     level = -quietness if quietness > 0 else verbosity
-    if level <= -2:
+    if level <= LoggingVerbosity.ERROR:
         _logger.setLevel(logging.ERROR)
-    elif level == -1:
+    elif level == LoggingVerbosity.WARNING:
         _logger.setLevel(logging.WARNING)
-    elif level == 0:
+    elif level == LoggingVerbosity.INFO:
         _logger.setLevel(logging.INFO)
-    elif level >= 1:
+    elif level >= LoggingVerbosity.DEBUG:
         _logger.setLevel(logging.DEBUG)
 
 
