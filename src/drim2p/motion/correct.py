@@ -37,7 +37,9 @@ _logger = logging.getLogger(__name__)
     "-s",
     "--settings-path",
     required=False,
-    type=click.Path(exists=True, file_okay=True, dir_okay=False),
+    type=click.Path(
+        exists=True, file_okay=True, dir_okay=False, path_type=pathlib.Path
+    ),
     help="Path to the settings file to use.",
 )
 @click.option(
@@ -67,15 +69,6 @@ _logger = logging.getLogger(__name__)
         "Exclude filters to apply when searching for RAW files. "
         "This supports regular-expressions. Exclude filters are applied after all "
         "include filters."
-    ),
-)
-@click.option(
-    "--strict-filters",
-    required=False,
-    is_flag=True,
-    help=(
-        "Whether files not matching any include filter should be excluded, regardless "
-        "of exclude filters. This is ignored if no include filters are provided."
     ),
 )
 @click.option(

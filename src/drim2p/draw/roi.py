@@ -37,7 +37,9 @@ _logger = logging.getLogger(__name__)
     "-t",
     "--template",
     required=False,
-    type=click.Path(exists=True, file_okay=True, dir_okay=False),
+    type=click.Path(
+        exists=True, file_okay=True, dir_okay=False, path_type=pathlib.Path
+    ),
     default=None,
     help=(
         "Path to the HDF5 file to read default ROIs from. When provided, any ROIs "
