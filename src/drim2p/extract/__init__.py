@@ -12,4 +12,4 @@ def extract() -> None:
     """Extracts signals."""
 
 
-extract.add_command(signal.extract_signal_command, "signal")
+extract.add_command(signal.extract_signal_command)

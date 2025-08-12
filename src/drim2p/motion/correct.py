@@ -20,7 +20,7 @@ from drim2p import models
 _logger = logging.getLogger(__name__)
 
 
-@click.command
+@click.command("correct")
 @click.argument(
     "source",
     required=False,

@@ -39,6 +39,7 @@ plugins:
   - caption:
       figure:
         ignore_alt: True
+      additional_identifier: ["Image"]
   - gen-files:
       scripts:
         - scripts/gen_ref_pages.py
@@ -65,3 +66,14 @@ copyright:
 nav:
   - Getting started:
       - Installation: index.md
+      - Typical workflow: typical-workflow.md
+  - Tutorials:
+      - Overview: tutorials/index.md
+      - Conversion to HDF5: tutorials/conversion-to-hdf5.md
+      - Motion correction: tutorials/motion-correction.md
+      - ROI drawing: tutorials/roi-drawing.md
+      - Signal extraction and decontamination: tutorials/signal-extraction-and-decontamination.md
+      - ΔF/F₀ computation: tutorials/dff-calculation.md 
+  - Reference:
+      - CLI: reference/index.md
+      - API: reference/API/

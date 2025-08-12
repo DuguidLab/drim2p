@@ -22,7 +22,7 @@ from drim2p.io import raw as raw_io
 _logger = logging.getLogger(__name__)
 
 
-@click.command
+@click.command("raw")
 @click.argument(
     "source",
     required=False,

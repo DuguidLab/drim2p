@@ -12,4 +12,4 @@ def convert() -> None:
     """Converts data to HDF5/NWB."""
 
 
-convert.add_command(raw_convert.convert_raw_command, "raw")
+convert.add_command(raw_convert.convert_raw_command)
