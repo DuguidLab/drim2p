@@ -32,7 +32,7 @@ dependencies = [
   "duguidlab-motion-correction",  # SIMA fork
   "duguidlab-signal-separation",  # FISSA fork
   "h5py",
-  "napari[all]",
+  "napari",
   "numpy",
   "ome-types[lxml]",
   "pydantic",
