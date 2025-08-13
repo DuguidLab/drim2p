@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import pathlib
 from typing import Any
@@ -220,6 +221,8 @@ def draw_roi(
                     lambda x: da.mean(x, axis=0, keepdims=True),  # type: ignore[arg-type]
                     chunks=(1, *dataset.shape[1:]),
                 ).persist()  # type: ignore[call-arg]
+                # We could look for a pre-computed QA projection but we're loading the
+                # whole array into memory anyway so processing is pretty short.
                 projected = da.mean(grouped, axis=0).persist()
 
             # Retrieve ROIs if they exist
@@ -249,6 +252,18 @@ def draw_roi(
                 continue
 
         with h5py.File(path, "a") as handle:
+            # Use this opportunity to save the mean projection for QA if we computed it
+            if projected is not None:
+                qa_group = handle.get("QA/projections/motion_corrected")
+                if qa_group is None:
+                    qa_group = handle.create_group("QA/projections/motion_corrected")
+
+                with contextlib.suppress(KeyError):
+                    del qa_group["mean_intensity_projection"]
+
+                _logger.debug("Saving mean projection.")
+                qa_group.create_dataset("mean_intensity_projection", data=projected)
+
             # Add all ROIs to file. If force is not set, the ROIs will have already been
             # retrieved above so we can just delete them in the file and re-add them
             # with the new ones.
