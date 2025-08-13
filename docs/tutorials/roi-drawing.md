@@ -10,7 +10,7 @@ drim2p draw roi .
 
 This step can take a very different amount of time depending on the size, and storage modality, of your recording. If you only used a small recording as recommended, this should open the GUI in less than 30 seconds. However, for larger files (and for files on remote filesystems), this can start to take a minute or two (longer on network drives).
 
-What is happening under the hood when you run the command is that `drim2p` is loading the file and making both a maximum intensity projection of the whole recording as well as grouped maximum intensity projections every 10 frames.
+What is happening under the hood when you run the command is that `drim2p` is loading the file and making both a mean intensity projection of the whole recording as well as grouped mean intensity projections every 10 frames.
 
 If all goes well, you will see this log message:
 
@@ -25,7 +25,7 @@ Image: ROI drawing GUI.
 ![](../resources/screenshots/draw-roi-gui.png)
 
 !!! note
-    For larger and remote files, you might want to use the `--lazy` option (i.e., `drim2p draw roi . --lazy`) to avoid computing the maximum intensity projection over the whole file. This will considerably speed up the GUI startup time, but will result in no maximum intensity projection being shown and scrolling through grouped Z projections feeling more sluggish.
+    For larger and remote files, you might want to use the `--lazy` option (i.e., `drim2p draw roi . --lazy`) to avoid computing the mean intensity projection over the whole file. This will considerably speed up the GUI startup time, but will result in no mean intensity projection being shown and scrolling through grouped Z projections feeling more sluggish.
 
 ## Understanding the GUI
 
@@ -43,9 +43,9 @@ For ROI drawing, you will be using the button on the second row, fifth column (t
 
 ### 2. Layer list
 
-`napari` works using layers. The layer list contains three layers: 'ROIs', 'Grouped Z projections', and 'Maximum intensity projection' (missing if using `--lazy`).
+`napari` works using layers. The layer list contains three layers: 'ROIs', 'Grouped Z projections', and 'Mean intensity projection' (missing if using `--lazy`).
 
-By default, you will see that only the 'ROIs' and 'Maximum intensity projection' are visible (the eye icon to the left of their name is toggled on) while the 'Grouped Z projections' is not. This allows you to use the overall projection to draw your ROIs before showing the 'Grouped Z projections' and verifying that motion correction was done properly. You can toggle the visibility of each layer by clicking the eye icon.
+By default, you will see that only the 'ROIs' and 'Mean intensity projection' are visible (the eye icon to the left of their name is toggled on) while the 'Grouped Z projections' is not. This allows you to use the overall projection to draw your ROIs before showing the 'Grouped Z projections' and verifying that motion correction was done properly. You can toggle the visibility of each layer by clicking the eye icon.
 
 When playing around with layers, it is possible that you will select a layer other than 'ROIs' (e.g., by left clicking on the name of another layer). Doing so will change what is available from the controls and will prevent you from drawing ROIs. To go back to ROI drawing, simply click on the 'ROIs' layer by left clicking on its name.
 

@@ -100,7 +100,7 @@ _logger = logging.getLogger(__name__)
     help=(
         "Whether to lazily load the file. This will speed up the GUI startup time but "
         "will slow down any slicing when it is open. This will also disable the"
-        "maximum intensity projection."
+        "mean intensity projection."
     ),
 )
 @click.option(
@@ -161,7 +161,7 @@ def draw_roi(
         lazy (bool, optional):
             Whether to lazily load the file. This will speed up the GUI startup time
             but will slow down any slicing when it is open. This will also disable the
-            maximum intensity projection.
+            mean intensity projection.
         force (bool, optional):
             Whether to ovewrite ROIs if some are found in source. Otheriwse, ROIs are
             appended. Be careful when using this option as it will lead to all ROIs
@@ -203,9 +203,9 @@ def draw_roi(
             array: da.Array = da.from_array(
                 dataset, chunks=(projection_window, *dataset.shape[1:])
             )
-            # Make maximum intensity grouped projections every projection_window frames
+            # Make mean intensity grouped projections every projection_window frames
             grouped: da.Array = array.map_blocks(
-                lambda x: da.max(x, axis=0, keepdims=True),  # type: ignore[arg-type]
+                lambda x: da.mean(x, axis=0, keepdims=True),  # type: ignore[arg-type]
                 chunks=(1, *dataset.shape[1:]),
             )  # type: ignore[call-arg]
 
@@ -217,10 +217,10 @@ def draw_roi(
                 # Redefining grouped is about twice a fast as simply persisting it if
                 # array was also persisted before it. Not exactly sure why.
                 grouped = array.map_blocks(
-                    lambda x: da.max(x, axis=0, keepdims=True),  # type: ignore[arg-type]
+                    lambda x: da.mean(x, axis=0, keepdims=True),  # type: ignore[arg-type]
                     chunks=(1, *dataset.shape[1:]),
                 ).persist()  # type: ignore[call-arg]
-                projected = da.max(grouped, axis=0).persist()
+                projected = da.mean(grouped, axis=0).persist()
 
             # Retrieve ROIs if they exist
             rois: list[np.ndarray[Any, np.dtype[np.number]]] = []
@@ -289,12 +289,12 @@ def _start_roi_gui(
     _logger.debug("Preparing napari viewer.")
     viewer = napari.viewer.Viewer(show=False)
 
-    # Add 2D (YX) maximum projection if provided. It can be missing if we are lazily
+    # Add 2D (YX) mean projection if provided. It can be missing if we are lazily
     # loading the data.
     if projected is not None:
         viewer.add_image(
             da.squeeze(projected),  # Ensure we only have YX
-            name="Maximum intensity projection",
+            name="Mean intensity projection",
         )
 
     # Add 3D (TYX) grouped Z projections
