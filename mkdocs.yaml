@@ -13,8 +13,7 @@ theme:
     - navigation.top
     - navigation.footer
     - content.code.copy
-  icon:
-    repo: fontawesome/brands/github
+  logo: resources/images/logo.svg
   font:
     text: Montserrat
   palette:
@@ -73,7 +72,7 @@ nav:
       - Motion correction: tutorials/motion-correction.md
       - ROI drawing: tutorials/roi-drawing.md
       - Signal extraction and decontamination: tutorials/signal-extraction-and-decontamination.md
-      - ΔF/F₀ computation: tutorials/dff-calculation.md 
+      - ΔF/F₀ computation: tutorials/dff-calculation.md
   - Reference:
       - CLI: reference/index.md
       - API: reference/API/

@@ -4,6 +4,14 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/drim2p.svg)](https://pypi.org/project/drim2p)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16882216.svg)](https://doi.org/10.5281/zenodo.16882216)
 
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/DuguidLab/drim2p/main/docs/resources/images/logo.svg" width="500">
+
+</div>
+
+&nbsp;
+
 A dreamy 2-photon imaging processing pipeline.
 
 -----

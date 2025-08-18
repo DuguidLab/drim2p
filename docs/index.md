@@ -1,3 +1,9 @@
+<div align="center">
+<img src="resources/images/logo.svg" width=250/>
+</div>
+
+&nbsp;
+
 # Getting started
 
 [`drim2p`](https://github.com/DuguidLab/drim2p) is an open-source package that facilitates the preprocessing of 2-photon calcium imaging recordings through a unified pipeline.
