@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import contextlib
 import logging
 import pathlib
 from typing import Any
@@ -211,8 +212,9 @@ def compute_dff(
         handle = h5py.File(path, "a", locking=False)
 
         # Retrieve signal group
-        signals_group = handle.get(io.EXT_SIGNAL_LIST_PATH)
-        if signals_group is None:
+        roi_group = handle.get(io.EXT_SIGNAL_LIST_PATH)
+        neuropil_group = handle.get(io.EXT_NEUROPIL_PATH)
+        if roi_group is None:
             _logger.error(
                 f"Could not find group '{io.EXT_SIGNAL_LIST_PATH}' inside of '{path}'. "
                 f"Available groups at the root are: {list(handle)}. Skipping file."
@@ -220,24 +222,26 @@ def compute_dff(
             continue
 
         # Check for existing ΔF/F₀
-        delta_f_group = handle.get(io.DEL_SIGNAL_PATH)
-        if delta_f_group is None:
-            delta_f_group = handle.create_group(io.DEL_SIGNAL_PATH)
-        elif delta_f_group is not None and not force:
-            _logger.info(
-                f"ΔF/F₀ group already exists in '{path}' and 'force' was not set. "
-                f"Skipping file."
-            )
-            continue
+        deltaf_roi_group = handle.get(io.DEL_SIGNAL_LIST_PATH)
+        if deltaf_roi_group is not None:
+            if not force:
+                _logger.info(
+                    f"ΔF/F₀ group already exists in '{path}' and 'force' was not set. "
+                    f"Skipping file."
+                )
+                continue
+
+            del handle[io.DEL_SIGNAL_LIST_PATH]
+
+        deltaf_roi_group = handle.create_group(io.DEL_SIGNAL_LIST_PATH)
 
         # Process signals
-        for name in signals_group:
-            signals = signals_group[name]
+        _logger.debug("Computing ΔF/F₀ for ROI signals.")
+        for name in roi_group:
+            roi_signal = roi_group[name]
 
-            # Compute ΔF/F₀
-            f0 = compute_f0(
-                # TODO: Maybe use a dask.Array if we run into memory problems
-                signals[:].T,  # Signals are stored as (signal, timepoint)
+            roi_dff = _compute_dff(
+                roi_signal,
                 method,
                 percentile,
                 window_width,
@@ -245,19 +249,66 @@ def compute_dff(
                 constant_value,
             )
 
-            # Convert F0 to something compatible with `signals`' shape
-            if len(f0.shape) == 1:
-                f0 = f0[np.newaxis]
-            f0 = f0.T
+            deltaf_roi_group[name] = roi_dff
 
-            # Compute ΔF/F₀
-            delta_f = signals - f0
-            dff = delta_f / f0
+        # Optionally do neuropils for QA
+        if neuropil_group is None:
+            _logger.debug(
+                "No QA info found from the extracted path. Skipping ΔF/F₀ computation "
+                "for neuropils."
+            )
+            _logger.info("Saved ΔF/F₀.")
+            return
 
-            # Write result
-            delta_f_group[name] = dff
+        with contextlib.suppress(KeyError):
+            del handle[io.DEL_NEUROPIL_PATH]
+        deltaf_neuropil_group = handle.create_group(io.DEL_NEUROPIL_PATH)
+
+        _logger.debug("Computing ΔF/F₀ for neuropil signals.")
+        for name in neuropil_group:
+            neuropil_signals = neuropil_group[name]
+
+            neuropil_dff = _compute_dff(
+                neuropil_signals,
+                method,
+                percentile,
+                window_width,
+                padding_mode,
+                constant_value,
+            )
+
+            deltaf_neuropil_group[name] = neuropil_dff
 
         _logger.info("Saved ΔF/F₀.")
+
+
+def _compute_dff(
+    signal: np.ndarray[Any, np.dtype[np.number]],
+    method: _F0Method = "percentile",
+    percentile: int = 5,
+    window_width: int = 0,
+    padding_mode: _PaddingMode = "constant",
+    constant_value: int = 0,
+) -> np.ndarray[Any, np.dtype[np.number]]:
+    f0 = compute_f0(
+        # Ensure the first dimension is time when processing neuropils
+        signal[:].T,  # Need to slice as HDF5 datasets don't have `.T`
+        method,
+        percentile,
+        window_width,
+        padding_mode,
+        constant_value,
+    )
+
+    # Convert F0 to something compatible with `signals`' shape
+    if len(f0.shape) == 1:
+        f0 = f0[np.newaxis]
+    f0 = f0.T
+
+    # Compute ΔF/F₀
+    delta_f = signal - f0
+
+    return delta_f / f0  # type: ignore[no-any-return]
 
 
 def compute_f0(

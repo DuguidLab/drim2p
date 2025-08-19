@@ -30,8 +30,10 @@ MOT_MEAN_PROJECTION_PATH = "/qa/motion_correction/mean_projection"
 ROI_LIST_PATH = "/preprocessing/rois"
 
 EXT_SIGNAL_LIST_PATH = "/preprocessing/extracted"
+EXT_NEUROPIL_PATH = "/qa/extracted/neuropil"
 
-DEL_SIGNAL_PATH = "/processing/deltaf"
+DEL_SIGNAL_LIST_PATH = "/processing/deltaf"
+DEL_NEUROPIL_PATH = "/qa/deltaf/neuropil"
 
 
 def collect_paths_from_extensions(

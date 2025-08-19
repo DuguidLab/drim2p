@@ -259,12 +259,23 @@ def _extract_signal_for_group(
         if handle.get(io.EXT_SIGNAL_LIST_PATH) is not None:
             _logger.debug("Deleting exisintg preprocessing.")
             del handle[io.EXT_SIGNAL_LIST_PATH]
+        if handle.get(io.EXT_NEUROPIL_PATH) is not None:
+            _logger.debug("Deleting exisintg QA.")
+            del handle[io.EXT_NEUROPIL_PATH]
 
         _logger.debug("Saving results.")
         extracted_group = handle.create_group(io.EXT_SIGNAL_LIST_PATH)
+        neuropil_group = handle.create_group(io.EXT_NEUROPIL_PATH)
         for roi_index in range(experiment.result.shape[0]):
-            extracted_group.create_dataset(
-                f"roi{roi_index}", data=experiment.result[roi_index, trial_index]
-            )
+            roi_results = experiment.result[roi_index, trial_index]
+
+            # At this point, we've got a 5xT array. Split it into two: one only contains
+            # the ROI signal, the other contains the neuropil contamination.
+            roi_signal = roi_results[0]
+            neuropil_contamination = roi_results[1:]
+
+            roi_name = f"roi{roi_index}"
+            extracted_group.create_dataset(roi_name, data=roi_signal)
+            neuropil_group.create_dataset(roi_name, data=neuropil_contamination)
 
     _logger.info("Finished extracting signal.")
