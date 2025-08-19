@@ -54,8 +54,8 @@ _logger = logging.getLogger(__name__)
     "--dataset",
     "dataset_name",
     required=False,
-    default="imaging",
-    help="Name of the HDF5 dataset to display for ROI drawing.",
+    default=io.MOT_IMAGING_PATH,
+    help="Full path from the root to the HDF5 dataset to display.",
 )
 @click.option(
     "-w",
@@ -126,7 +126,7 @@ def draw_roi_command(**kwargs: Any) -> None:
 def draw_roi(
     source: pathlib.Path,
     template: pathlib.Path | None = None,
-    dataset_name: str = "imaging",
+    dataset_name: str = io.MOT_IMAGING_PATH,
     projection_window: int = 10,
     recursive: bool = False,
     include: str | None = None,
@@ -149,7 +149,7 @@ def draw_roi(
             file. Use in conjunction with 'force' to overwrite any existing ROIs with
             the template ones.
         dataset_name (str, optional):
-            Name of the HDF5 dataset to display for ROI drawing.
+            Full path from the root to the HDF5 dataset to display.
         projection_window (int, optional): Window size to use for grouped Z projections.
         recursive (bool, optional):
             Whether to search directories recursively when looking for HDF5 files.
@@ -196,7 +196,7 @@ def draw_roi(
             if dataset is None:
                 _logger.error(
                     f"Could not find group '{dataset_name}' in file '{path}'."
-                    f"Available groups are: {list(handle)}. Skipping file."
+                    f"Available groups at the root are: {list(handle)}. Skipping file."
                 )
                 continue
 
@@ -254,26 +254,21 @@ def draw_roi(
         with h5py.File(path, "a") as handle:
             # Use this opportunity to save the mean projection for QA if we computed it
             if projected is not None:
-                qa_group = handle.get("QA/projections/motion_corrected")
-                if qa_group is None:
-                    qa_group = handle.create_group("QA/projections/motion_corrected")
-
                 with contextlib.suppress(KeyError):
-                    del qa_group["mean_intensity_projection"]
+                    del handle[io.MOT_MEAN_PROJECTION_PATH]
 
                 _logger.debug("Saving mean projection.")
-                qa_group.create_dataset("mean_intensity_projection", data=projected)
+                handle.create_dataset(io.MOT_MEAN_PROJECTION_PATH, data=projected)
 
             # Add all ROIs to file. If force is not set, the ROIs will have already been
             # retrieved above so we can just delete them in the file and re-add them
             # with the new ones.
-            if handle.get("ROIs") is not None:
+            if handle.get(io.ROI_LIST_PATH) is not None:
                 _logger.debug("Deleting exisintg ROIs.")
-                del handle["ROIs"]
+                del handle[io.ROI_LIST_PATH]
 
             _logger.debug("Saving ROIs.")
-            roi_group = handle.create_group("ROIs")
-            roi_shape_types = []
+            roi_group = handle.create_group(io.ROI_LIST_PATH)
             for index, (roi, shape_type) in enumerate(
                 zip(rois.data, rois.shape_type, strict=True)
             ):
@@ -285,11 +280,14 @@ def draw_roi(
                     )
                     continue
 
-                roi_group.create_dataset(f"roi{index}", data=roi)
-                roi_shape_types.append(shape_type)
+                dataset = roi_group.create_dataset(f"roi{index}", data=roi)
+                # For good measure, add the type to the dataset directly in addition
+                # to the whole group later on. This makes it easier to inspect the HDF5
+                # file manually.
+                dataset.attrs["SHAPE_TYPE"] = shape_type
 
             # Save ROI types
-            roi_group.create_dataset("roi_shape_types", data=rois.shape_type)
+            roi_group.attrs["SHAPE_TYPES"] = rois.shape_type
 
 
 def _start_roi_gui(

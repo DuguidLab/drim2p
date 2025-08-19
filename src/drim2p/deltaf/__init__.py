@@ -211,18 +211,18 @@ def compute_dff(
         handle = h5py.File(path, "a", locking=False)
 
         # Retrieve signal group
-        signals_group = handle.get("extracted")
+        signals_group = handle.get(io.EXT_SIGNAL_LIST_PATH)
         if signals_group is None:
             _logger.error(
-                f"Could not find group 'extracted' inside of '{path}'. "
-                f"Available groups are: {list(handle)}. Skipping file."
+                f"Could not find group '{io.EXT_SIGNAL_LIST_PATH}' inside of '{path}'. "
+                f"Available groups at the root are: {list(handle)}. Skipping file."
             )
             continue
 
         # Check for existing ΔF/F₀
-        delta_f_group = handle.get("delta_f")
+        delta_f_group = handle.get(io.DEL_SIGNAL_PATH)
         if delta_f_group is None:
-            delta_f_group = handle.create_group("delta_f")
+            delta_f_group = handle.create_group(io.DEL_SIGNAL_PATH)
         elif delta_f_group is not None and not force:
             _logger.info(
                 f"ΔF/F₀ group already exists in '{path}' and 'force' was not set. "

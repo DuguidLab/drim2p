@@ -20,6 +20,19 @@ _logger = logging.getLogger(__name__)
 
 COMPRESSION = Literal["gzip", "lzf"]
 
+ACQ_IMAGING_PATH = "/acquisition/imaging"
+ACQ_TIMESTAMPS_PATH = "/acquisition/timestamps"
+
+MOT_IMAGING_PATH = "/preprocessing/motion_correction/imaging"
+MOT_DISPLACEMENTS_PATH = "/qa/motion_correction/displacements"
+MOT_MEAN_PROJECTION_PATH = "/qa/motion_correction/mean_projection"
+
+ROI_LIST_PATH = "/preprocessing/rois"
+
+EXT_SIGNAL_LIST_PATH = "/preprocessing/extracted"
+
+DEL_SIGNAL_PATH = "/processing/deltaf"
+
 
 def collect_paths_from_extensions(
     root: pathlib.Path,
@@ -272,31 +285,31 @@ def read_rois_and_shapes(
     """Reads ROI arrays and shapes from an HDF5 group.
 
     Args:
-        root (h5py.Group): Group that contains the ROIs and their shapes.
+        root (h5py.Group): File handle of the root group.
 
     Returns:
         A tuple of (rois, shapes) where `rois` is a list of NumPy arrays containing the
         vertices of the ROIs (of shape (X, 2) where X is the number of ROIs), and
         `shapes` is a list of string values for the shapes of the ROIs.
     """
-    rois = []
-    roi_shape_types = []
-    roi_group = root.get("ROIs")
-    if roi_group is None:
-        _logger.debug("No ROIs found.")
-    else:
-        _logger.debug("Found existing ROIs.")
-        rois = [roi[:] for name, roi in roi_group.items() if name != "roi_shape_types"]
+    rois: list[np.ndarray[Any, np.dtype[np.number]]] = []
+    roi_shape_types: list[str] = []
 
-        roi_shape_types = roi_group.get("roi_shape_types")
-        if roi_shape_types is None:
-            _logger.error(
-                "Failed to retrieve ROIs shape types. Assuming all rectangles."
-            )
-            roi_shape_types = ["rectangle"] * len(rois)
-        else:
-            # h5py returns the values as a NumPy array of bytes
-            roi_shape_types = roi_shape_types[:].astype(str).tolist()
+    try:
+        roi_group = root[ROI_LIST_PATH]
+    except KeyError:
+        _logger.debug("No ROIs found.")
+        return rois, roi_shape_types
+
+    _logger.debug("Found existing ROIs.")
+
+    rois = [roi[:] for roi in roi_group.values()]
+    roi_shape_types = roi_group.attrs.get("SHAPE_TYPES")
+    if roi_shape_types is not None and len(rois) == roi_shape_types.shape[0]:
+        roi_shape_types = roi_shape_types[:].astype(str).tolist()
+    else:
+        _logger.error("Failed to retrieve ROIs shape types. Assuming all polygons.")
+        roi_shape_types = ["polygon"] * len(rois)
 
     return rois, roi_shape_types
 

@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import contextlib
 import logging
 import pathlib
 import shutil
@@ -169,7 +170,7 @@ def _apply_motion_correction(
     # Keep own handle to check for motion correction dataset
     file = h5py.File(path, "a", locking=False)
 
-    if "imaging" in list(file) and not force:
+    if has_a_motion_corrected_dataset(file) and not force:
         _logger.info(
             f"Skipping '{path}' as it was already corrected and --force is not set."
         )
@@ -210,7 +211,9 @@ def _apply_motion_correction(
         shutil.rmtree(temp_sima_dataset_path)
 
     # Create a `Sequence` object from the HDF5 file that sima understands
-    sequences = [sima.Sequence.create("HDF5", path, key="data", dim_order="tyx")]
+    sequences = [
+        sima.Sequence.create("HDF5", path, key=io.ACQ_IMAGING_PATH, dim_order="tyx")
+    ]
     # Motion correct
     dataset, displacements = strategy.correct(sequences, temp_sima_dataset_path)
 
@@ -220,24 +223,12 @@ def _apply_motion_correction(
     time_string = f"{hours:.0f}h {minutes:.0f}m {duration:.2f}s"
     _logger.info(f"Finished motion correction in {time_string}.")
 
-    # TODO: Write motion correction parameters to file
-    report_string = f"""\
-Chunk: {path.stem}
-Strategy: {settings.strategy.name}
-Displacement: {list(settings.displacement)}
-Processing time: {time_string}\
-    """
-    with (
-        path.with_stem(path.stem + "_motion_correction_report")
-        .with_suffix(".txt")
-        .open("w") as handle
-    ):
-        handle.write(report_string)
-
     # Save motion corrected dataset and displacements
-    if "imaging" in list(file):  # Remote corrected dataset if it exists
-        _logger.debug(f"Removing existing 'imaging' dataset from '{path}'.")
-        del file["imaging"]
+    if has_a_motion_corrected_dataset(file):  # Remote corrected dataset if it exists
+        _logger.debug(
+            f"Removing existing motion corrected 'imaging' dataset from '{path}'."
+        )
+        del file[io.MOT_IMAGING_PATH]
 
     compression, compression_opts, shuffle = io.get_h5py_compression_parameters(
         compression, compression_opts
@@ -253,8 +244,8 @@ Processing time: {time_string}\
     # save 3/4 of the space by keeping it uint16.
     sequence = dataset.sequences[0]
     shape = sequence.shape
-    file_dataset = file.create_dataset(
-        "imaging",
+    imaging_dataset = file.create_dataset(
+        io.MOT_IMAGING_PATH,
         shape=shape[0:1] + shape[2:4],
         dtype=np.uint16,
         chunks=(1, *shape[2:4]),
@@ -264,13 +255,19 @@ Processing time: {time_string}\
     )
     for i, frame in enumerate(iter(sequence)):
         # No need to use `np.round` as the decimal part is seemingly always 0
-        file_dataset[i] = frame.squeeze().astype(np.uint16)
+        imaging_dataset[i] = frame.squeeze().astype(np.uint16)
 
     _logger.debug("Saving displacements.")
-    np.savez_compressed(
-        path.with_stem(path.stem + "_displacements").with_suffix(".npz"),
-        displacements=displacements,
-    )
+
+    displacements = displacements[0].squeeze()  # Go from 1xTx1x2 to Tx2
+    with contextlib.suppress(KeyError):  # Ensure it doesn't exist
+        del file[io.MOT_DISPLACEMENTS_PATH]
+    file.create_dataset(io.MOT_DISPLACEMENTS_PATH, data=displacements)
+
+    # Save some information about the settings used
+    imaging_dataset.attrs["STRATEGY"] = settings.strategy.name
+    imaging_dataset.attrs["MAX_DISPLACEMENT"] = settings.displacement
+    imaging_dataset.attrs["PROCESSING_TIME"] = time_string
 
     _logger.info("Saved motion correction to file.")
 
@@ -279,3 +276,15 @@ Processing time: {time_string}\
         temp_sima_dataset_path,
         onexc=lambda *_: _logger.debug("Failed to delete sima directory."),
     )
+
+
+def has_a_motion_corrected_dataset(handle: h5py.File) -> bool:
+    """Returns whether the given handle has an existing motion-corrected dataset.
+
+    Args:
+        handle (h5py.File): Handle to check.
+
+    Returns:
+        Whether such a dataset exists.
+    """
+    return handle.get(io.MOT_IMAGING_PATH) is not None

@@ -45,8 +45,8 @@ _logger = logging.getLogger(__name__)
     "--dataset",
     "dataset_name",
     required=False,
-    default="imaging",
-    help="Name of the HDF5 dataset to display for ROI drawing.",
+    default=io.MOT_IMAGING_PATH,
+    help="Full path from the root to the HDF5 dataset to process.",
 )
 @click.option(
     "-r",
@@ -109,7 +109,7 @@ def extract_signal_command(**kwargs: Any) -> None:
 def extract_signal(
     source: pathlib.Path,
     group_by_regex: str | None = None,
-    dataset_name: str = "imaging",
+    dataset_name: str = io.MOT_IMAGING_PATH,
     recursive: bool = False,
     include: str | None = None,
     exclude: str | None = None,
@@ -137,7 +137,7 @@ def extract_signal(
             usage depending on how many chunks needs to be loaded. Also note that for
             grouping to work, grouped files should have the same number of ROIs
         dataset_name (str, optional):
-            Name of the HDF5 dataset to work with.
+            Full path from the root to the HDF5 dataset to process.
         recursive (bool, optional):
             Whether to search directories recursively when looking for HDF5 files.
         include (str | None, optional):
@@ -201,7 +201,7 @@ def _extract_signal_for_group(
         if dataset is None:
             _logger.error(
                 f"Could not find group '{dataset_name}' in file '{path}'. "
-                f"Available groups are: {list(handle)}."
+                f"Available groups at the root are: {list(handle)}."
                 f"{skip_or_abort_message}"
             )
             if dont_abort_on_skipped_file:
@@ -212,7 +212,7 @@ def _extract_signal_for_group(
             return
 
         # Check for existing signal extraction
-        if handle.get("extracted") and not force:
+        if handle.get(io.EXT_SIGNAL_LIST_PATH) and not force:
             _logger.info(
                 f"Extracted group already exists in '{path}' and 'force' was "
                 f"not set. "
@@ -256,12 +256,12 @@ def _extract_signal_for_group(
 
     for trial_index, handle in enumerate(handles):
         # Ensure group doesn't exist
-        if handle.get("extracted") is not None:
+        if handle.get(io.EXT_SIGNAL_LIST_PATH) is not None:
             _logger.debug("Deleting exisintg preprocessing.")
-            del handle["extracted"]
+            del handle[io.EXT_SIGNAL_LIST_PATH]
 
         _logger.debug("Saving results.")
-        extracted_group = handle.create_group("extracted")
+        extracted_group = handle.create_group(io.EXT_SIGNAL_LIST_PATH)
         for roi_index in range(experiment.result.shape[0]):
             extracted_group.create_dataset(
                 f"roi{roi_index}", data=experiment.result[roi_index, trial_index]
