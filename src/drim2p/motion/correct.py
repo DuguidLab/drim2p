@@ -20,6 +20,23 @@ from drim2p import models
 _logger = logging.getLogger(__name__)
 
 
+def _parse_max_displacement(
+    _: Any, __: Any, max_displacement: str
+) -> tuple[int, int] | None:
+    x, y = max_displacement.split(",")
+    try:
+        x = int(x)
+        y = int(y)
+    except ValueError:
+        _logger.error(  # noqa: TRY400
+            "Could not parse max displacement '{max_displacement}' as X and Y "
+            "values. Ensure you have provided them in the format x,y (no space)."
+        )
+        return None
+
+    return (x, y)
+
+
 @click.command("correct")
 @click.argument(
     "source",
@@ -34,13 +51,39 @@ _logger = logging.getLogger(__name__)
     callback=cli_utils.noop_if_missing,
 )
 @click.option(
+    "-S",
+    "--strategy",
+    required=False,
+    type=click.Choice(
+        [strategy.name for strategy in models.Strategy], case_sensitive=False
+    ),
+    help=(
+        "Strategy to use for motion correction. This is ignored if a settings path is "
+        "provided."
+    ),
+)
+@click.option(
+    "-d",
+    "--max-displacement",
+    required=False,
+    type=str,
+    callback=_parse_max_displacement,
+    help=(
+        "Maximum expected pixel displacement for motion correction. This should be in "
+        "the form x,y. This is ignored if a settings path is provided."
+    ),
+)
+@click.option(
     "-s",
     "--settings-path",
     required=False,
     type=click.Path(
         exists=True, file_okay=True, dir_okay=False, path_type=pathlib.Path
     ),
-    help="Path to the settings file to use.",
+    help=(
+        "Path to the settings file to use. A strategy and max displacements can be "
+        "provided together to remove the need for a settings file."
+    ),
 )
 @click.option(
     "-r",
@@ -110,6 +153,8 @@ def apply_motion_correction_command(**kwargs: Any) -> None:
 
 def apply_motion_correction(
     source: pathlib.Path,
+    strategy: models.Strategy | None = None,
+    max_displacement: tuple[int, int] | None = None,
     settings_path: pathlib.Path | None = None,
     recursive: bool = False,
     include: str | None = None,
@@ -128,8 +173,15 @@ def apply_motion_correction(
         source (pathlib.Path):
             Source file or directory to convert. If a directory, the default is to look
             for HDF5 (.h5) files inside of it without recursion.
+        strategy (models.Strategy | None, optional):
+            Strategy to use for motion correction. This is ignored if a settings path is
+            provided.
+        max_displacement (tuple[int, int] | None, optional):
+            Maximum expected pixel displacement for motion correction. This should be in
+            the form x,y. This is ignored if a settings path is provided.
         settings_path (pathlib.Path | None, optional):
-            Path to the settings.toml file to use to configure motion correction.
+            Path to the settings file to use. A strategy and max displacements can be
+            provided together to remove the need for a settings file.
         recursive (bool, optional):
             Whether to search directories recursively when looking for HDF5 files.
         include (str | None, optional):
@@ -143,12 +195,17 @@ def apply_motion_correction(
             Compression options to use with the given algorithm.
         force (bool, optional): Whether to ovewrite output datasets if they exist.
     """
-    if settings_path is None:
-        _logger.error("Please provide a settings file.")
+    # Parse settings
+    if settings_path is not None:
+        settings = models.MotionConfig.from_file(settings_path)
+    elif strategy is not None and max_displacement is not None:
+        settings = models.MotionConfig(strategy=strategy, displacement=max_displacement)
+    else:
+        _logger.error(
+            "Please provide both a strategy and max displacement manually or through a "
+            "settings file."
+        )
         return
-
-    # Load the settings
-    settings = models.MotionConfig.from_file(settings_path)
 
     for path in io.find_paths(source, [".h5"], include, exclude, recursive, True):
         _logger.debug(f"Motion correcting '{path}'.")
