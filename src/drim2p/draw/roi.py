@@ -269,6 +269,7 @@ def draw_roi(
 
             _logger.debug("Saving ROIs.")
             roi_group = handle.create_group(io.ROI_LIST_PATH)
+            shape_types = []
             for index, (roi, shape_type) in enumerate(
                 zip(rois.data, rois.shape_type, strict=True)
             ):
@@ -285,9 +286,10 @@ def draw_roi(
                 # to the whole group later on. This makes it easier to inspect the HDF5
                 # file manually.
                 dataset.attrs["SHAPE_TYPE"] = shape_type
+                shape_types.append(shape_type)
 
             # Save ROI types
-            roi_group.attrs["SHAPE_TYPES"] = rois.shape_type
+            roi_group.attrs["SHAPE_TYPES"] = shape_types
 
 
 def _start_roi_gui(
