@@ -3,10 +3,12 @@
 # SPDX-License-Identifier: MIT
 
 import logging
+import platform
 import sys
 
 import click
 
+from drim2p import __about__
 from drim2p import convert
 from drim2p import deltaf
 from drim2p import draw
@@ -53,7 +55,15 @@ class LoggingVerbosity:
     is_flag=True,
     help="Disable logging colours.",
 )
-def drim2p(verbosity: int = 0, quietness: int = 0, no_colour: bool = False) -> None:
+@click.option(
+    "-V", "--version", required=False, is_flag=True, help="Print version information."
+)
+def drim2p(
+    verbosity: int = 0,
+    quietness: int = 0,
+    no_colour: bool = False,
+    version: bool = False,
+) -> None:
     """A dreamy 2-photon imaging processing pipeline.
     \f
 
@@ -64,8 +74,19 @@ def drim2p(verbosity: int = 0, quietness: int = 0, no_colour: bool = False) -> N
             Quietness level. Level 0 suppresses INFO messages. Level 1 suppresses
             WARNING messages.
         no_colour (bool, optional): Whether to disable logging colours.
+        version (bool, optional): Whether to print version version and exit.
     """  # noqa: D205, D301, D415
     set_up_logging(verbosity, quietness, no_colour)
+
+    if version:
+        # Print version information and exit
+        software_version = __about__.__version__
+        python_version = platform.python_version()
+
+        version_info = f"drim2p {software_version} (Python {python_version})"
+        click.echo(version_info)
+
+        sys.exit()
 
 
 def set_up_logging(verbosity: int, quietness: int, no_colour: bool) -> None:
