@@ -314,7 +314,7 @@ def convert_raw(
         )
         with h5py.File(out_path, "w") as handle:
             dataset = handle.create_dataset(
-                "data",
+                io.ACQ_IMAGING_PATH,
                 data=array,
                 # Chunk per frame, same for writing but speeds up reading a lot
                 chunks=(1, *shape[1:]),
@@ -328,7 +328,7 @@ def convert_raw(
 
             if timestamps is not None:
                 handle.create_dataset(
-                    "timestamps",
+                    io.ACQ_TIMESTAMPS_PATH,
                     data=timestamps,
                     compression=compression,
                     compression_opts=compression_opts,

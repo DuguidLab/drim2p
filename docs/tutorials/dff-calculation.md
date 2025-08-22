@@ -4,7 +4,7 @@ There are multiple ways to compute F₀, using a percentile, the mean, the media
 
 It is also possible to use a rolling window to continually update the F₀ value throughout the signal.
 
-This tutorial focuses on the using the defaults (5th percentile with no rolling window). For a more in-depth guide to customising the computation, see the [how-to guide]() and the [CLI reference](../reference/index.md#drim2p-deltaf).
+This tutorial focuses on using the default (5th percentile with no rolling window). For a more in-depth guide to customising the computation, see the [how-to guide]() and the [CLI reference](../reference/index.md#drim2p-deltaf).
 
 ## Calculating ΔF/F₀
 
