@@ -1,12 +1,12 @@
-import click
 import logging
 import pathlib
-import h5py as h5
 
+import click
+import h5py as h5
+import numpy as np
 from jinja2 import Environment
 from jinja2 import PackageLoader
 from jinja2 import select_autoescape
-
 
 MOTION_REPORT_TEMPLATE = "motion_correction.html"
 SIGNAL_REPORT_TEMPLATE = "signal_extraction.html"
@@ -59,12 +59,18 @@ def generate_motion_correction_report(
 
     template_identifiers = {
         "session_id": session_id,
-        "animal_id": ...,
-        "session_date": ...,
-        "experiment_id": ...,
-        "duration": ...,
-        "frame_num": ...,
-        "filesize": ...,
+        "animal_id": session_id.split("_")[0].replace("sub-", ""),
+        "session_date": session_id.split("_date-")[-1].replace("_", ":"),
+        "experiment_id": session_id.split("_exp-")[-1].split("_")[0],
+        "duration": str(
+            (np.datetime64(h5file.get("timestamps")[-1]) - np.datetime64(h5file.get("timestamps")[0])).astype(  # type: ignore[attr-defined]
+                "timedelta64[m]"
+            )
+            if h5file.get("timestamps")
+            else None
+        ),
+        "frame_num": len(h5file.get("/acquisition/imaging")),  # type: ignore[attr-defined]
+        "filesize": h5file.id.get_filesize() / (1024 * 1024),
         "strategy": ...,
         "max_displacement": ...,
         "processing_time": ...,
