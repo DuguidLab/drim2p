@@ -37,6 +37,7 @@ dependencies = [
   "ome-types[lxml]",
   "pydantic",
   "Jinja2",
+  "pyplot",
 ]
 
 [project.urls]
