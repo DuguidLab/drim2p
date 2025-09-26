@@ -22,7 +22,7 @@ Finished extracting signal.
 Once again, no extra file should be added to the directory, instead the extracted signals will be embedded into the HDF5 file.
 
 !!! note
-    The extracted signal arrays for each ROIs will have 5 signals. The first signal is the "true" signal after decontamination while the other four are the neuropil signals estimated by FISSA.
+    FISSA outputs signal arrays in the shape (5, timepoints), where the first index is the "true" signal and the next four are the neuropil ones. `drim2p` only saves the "true" signal under the normal preprocessing group. However, the neuropil signals are still saved in the QA group.
 
 ## What's next?
 

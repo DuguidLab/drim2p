@@ -105,15 +105,13 @@ Image: Navigating grouped projections.
 
 ## Finalising the ROIs
 
-When you are happy with your ROIs and you are ready to move to the next step, simply close the GUI window.
+When you are happy with your ROIs and you are ready to move to the next step, simply close the GUI window and the ROIs will be saved.
 
-The ROIs will automatically be saved. However, you won't see a new file in your directory. That is one of the strengths of HDF5. You can store multiple bits of information inside the same file. Think of it as a ZIP archive, it's essentially a folder structure but all inside of one file. In fact, this is not the first time that we append to this file. At the end of motion correction, you might have noticed that we saved some extra files but not the motion corrected recording. That is because it was simply appended to the HDF5 file.
-
-If, for one reason or another, you have drawn a bunch of ROIs but do not want them to be saved, you should delete the 'ROIs' layer by selecting it (left click on its name) and clicking the bin icon above it and to the right. This will delete all the ROIs drawn during the current session since starting the GUI.
+If, for one reason or another, you have drawn a bunch of ROIs but do not want them to be saved, you should delete the 'ROIs' layer by selecting it (left click on its name) and clicking the bin icon above it and to the right. This will delete all the ROIs drawn during the current session since starting the GUI. Upon closing the GUI, any modification to the ROIs will be reverted.
 
 ## Editing existing ROIs
 
-Once ROIs have been saved to the HDF5 file, you can come back to it later on, run `drim2p draw roi .` and the GUI will reopen the file, with all its ROIs already drawn. Note that at this point, deleting the ROIs layer will not result in those pre-existing ROIs being deleted. If you wish to delete those, you will need to delete each ROI manually.
+Once ROIs have been saved to the HDF5 file, you can come back to it later on, run `drim2p draw roi .` and the GUI will reopen the file, with all its ROIs already drawn. Note that at this point, deleting the ROIs layer will not result in those pre-existing ROIs being deleted. If you wish to delete those, you will need to delete the ROIs without deleting the layer (this can be done by selecting all the ROIs with the select tool and pressing `delete` or `backspace` on your keyboard).
 
 ## What's next?
 
