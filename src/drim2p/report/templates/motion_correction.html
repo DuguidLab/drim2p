@@ -7,11 +7,78 @@
 </div>
 
 <div class="row mb-3">
-    <h2 id="integrity">Poopoopeeppee</h2>
+    <h2 id="metadata">Session metadata</h2>
 
-    <div class="col-md-12 mb-3 mt-3">
-        <h6>Some figure</h6>
-        {{ fig_test | safe }}
+    <div class="row mb-1">
+        <div class="col-md-4 mb-1">
+            <strong>Animal ID:</strong> {{ animal_id or "Unknown" }}
+        </div>
+        <div class="col-md-4 mb-1">
+            <strong>Session date:</strong> {{ session_date or "Unknown" }}
+        </div>
+        <div class="col-md-4 mb-1">
+            <strong>Experiment ID:</strong> {{ experiment_id or "Unknown" }}
+        </div>
+    </div>
+    <div class="row mb-1">
+        <div class="col-md-4 mb-1">
+            <strong>Recording duration:</strong> {{ duration or "Unknown" }}
+        </div>
+        <div class="col-md-4 mb-1">
+            <strong>Frames:</strong> {{ frame_num or "Unknown" }}
+        </div>
+        <div class="col-md-4 mb-1">
+            <strong>File size:</strong> {{ '%0.2f'| format(filesize or 0 | float) or "Unknown" }} MB
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <h2 id="metadata">Motion correction parameters</h2>
+
+    <div class="row mb-1">
+        <div class="col-md-6 mb-3">
+            <strong>Strategy:</strong> {{ strategy or "Unknown" }}
+        </div>
+    </div>
+    <div class="row mb-1">
+        <div class="col-md-6 mb-3">
+            <strong>Max displacement:</strong> {{ max_displacement or "Unknown" }}
+        </div>
+    </div>
+    <div class="row mb-1">
+        <div class="col-md-6 mb-3">
+            <strong>Processing time:</strong> {{ processing_time or "Unknown" }}
+        </div>
+    </div>
+</div>
+
+
+<div class="row mb-3">
+    <h2 id="separation">Motion correction QA</h2>
+
+    <h4>Frame-to-frame shifts</h4>
+    <div class="row mb-3 mt-3">
+        <div class="col-md-6 mb-3">
+            <h6>x-axis shifts</h6>
+            {{ fig_x_axis_shifts | safe }}
+        </div>
+        <div class="col-md-6 mb-3">
+            <h6>y-axis shifts</h6>
+            {{ fig_y_axis_shifts | safe }}
+        </div>
+    </div>
+
+    <h4>Mean intensity projections</h4>
+    <div class="row mb-3 mt-3">
+        <div class="col-md-6 mb-3">
+            <h6>Pre-correction projection</h6>
+            {{ fig_projection_pre | safe }}
+        </div>
+        <div class="col-md-6 mb-3">
+            <h6>Post-correction projection</h6>
+            {{ fig_projection_post | safe }}
+        </div>
     </div>
 </div>
 

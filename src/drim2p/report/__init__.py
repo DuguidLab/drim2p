@@ -53,7 +53,7 @@ def generate_motion_correction_report(
         pathlib.Path: Path to generated report.
     """
     h5file = h5.File(path)
-    session_id = str(path).split("/")[-1]
+    session_id = str(path).split("/")[-1].replace(".h5", "")
 
     template = env.get_template(MOTION_REPORT_TEMPLATE)
 
