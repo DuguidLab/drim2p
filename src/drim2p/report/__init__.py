@@ -63,3 +63,12 @@ def generate_motion_correction_report(
     out_path.write_text(template.render(template_identifiers), encoding="utf-8")
 
     return out_path
+
+
+def generate_roi_drawing_report(): ...
+
+
+def generate_signal_extraction_report(): ...
+
+
+def generate_deltaf_report(): ...
