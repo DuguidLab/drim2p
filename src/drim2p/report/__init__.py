@@ -27,7 +27,7 @@ def report() -> None:
     type=click.Path(
         exists=True,
         file_okay=True,
-        dir_okay=True,
+        dir_okay=False,
         readable=True,
         path_type=pathlib.Path,
     ),
@@ -71,7 +71,7 @@ def generate_motion_correction_report(
     type=click.Path(
         exists=True,
         file_okay=True,
-        dir_okay=True,
+        dir_okay=False,
         readable=True,
         path_type=pathlib.Path,
     ),
@@ -95,7 +95,7 @@ def generate_roi_drawing_report(
     type=click.Path(
         exists=True,
         file_okay=True,
-        dir_okay=True,
+        dir_okay=False,
         readable=True,
         path_type=pathlib.Path,
     ),
@@ -119,7 +119,7 @@ def generate_signal_extraction_report(
     type=click.Path(
         exists=True,
         file_okay=True,
-        dir_okay=True,
+        dir_okay=False,
         readable=True,
         path_type=pathlib.Path,
     ),
