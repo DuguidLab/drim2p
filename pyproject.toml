@@ -36,6 +36,7 @@ dependencies = [
   "numpy",
   "ome-types[lxml]",
   "pydantic",
+  "Jinja2",
 ]
 
 [project.urls]

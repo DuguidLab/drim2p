@@ -1,0 +1,65 @@
+import click
+import logging
+import pathlib
+import h5py as h5
+
+from jinja2 import Environment
+from jinja2 import PackageLoader
+from jinja2 import select_autoescape
+
+
+MOTION_REPORT_TEMPLATE = "motion_correction.html"
+SIGNAL_REPORT_TEMPLATE = "signal_extraction.html"
+DELTAF_REPORT_TEMPLATE = "deltaf.html"
+ROI_REPORT_TEMPLATE = "roi_drawing.html"
+
+env = Environment(loader=PackageLoader("drim2p.report", "templates"), autoescape=select_autoescape())
+
+
+@click.group()
+def report() -> None:
+    """Generate preprocessing reports."""
+
+
+@report.command("motion")
+@click.argument(
+    "path",
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=True,
+        readable=True,
+        path_type=pathlib.Path,
+    ),
+)
+@click.option(
+    "-o",
+    "--out_dir",
+    type=click.Path(dir_okay=True),
+    default=".",
+    help="Output directory for motion correction report.",
+)
+def generate_motion_correction_report(
+    path: pathlib.Path,
+    out_dir: pathlib.Path,
+) -> pathlib.Path:
+    """Generate report for motion correction preprocessing step.
+
+    Args:
+        path (pathlib.Path): Path to motion corrected HDF5 file.
+        out_dir (pathlib.Path): Directory where the report will be saved, defaults to current directory.
+
+    Returns:
+        pathlib.Path: Path to generated report.
+    """
+    h5file = h5.File(path)
+    session_id = str(path).split("/")[-1].split("_preprocessed")[0]
+
+    template = env.get_template(MOTION_REPORT_TEMPLATE)
+
+    template_identifiers = {"session_id": session_id}
+
+    out_path = out_dir / pathlib.Path(str(path).split("/")[-1].replace(".h5", "_report.html"))
+    out_path.write_text(template.render(template_identifiers), encoding="utf-8")
+
+    return out_path

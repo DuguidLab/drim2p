@@ -15,6 +15,7 @@ from drim2p import draw
 from drim2p import extract
 from drim2p import logs
 from drim2p import motion
+from drim2p import report
 
 _logger = logging.getLogger("drim2p")
 
@@ -55,9 +56,7 @@ class LoggingVerbosity:
     is_flag=True,
     help="Disable logging colours.",
 )
-@click.option(
-    "-V", "--version", required=False, is_flag=True, help="Print version information."
-)
+@click.option("-V", "--version", required=False, is_flag=True, help="Print version information.")
 def drim2p(
     verbosity: int = 0,
     quietness: int = 0,
@@ -131,6 +130,7 @@ drim2p.add_command(motion.motion)
 drim2p.add_command(draw.draw)
 drim2p.add_command(extract.extract)
 drim2p.add_command(deltaf.deltaf)
+drim2p.add_command(report.report)
 
 
 if __name__ == "__main__":
