@@ -22,8 +22,11 @@ _logger = logging.getLogger(__name__)
 
 
 def _parse_max_displacement(
-    _: Any, __: Any, max_displacement: str
+    _: Any, __: Any, max_displacement: str | None
 ) -> tuple[int, int] | None:
+    if max_displacement is None:
+        return None
+
     x, y = max_displacement.split(",")
     try:
         x = int(x)
