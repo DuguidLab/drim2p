@@ -80,7 +80,7 @@ test = [
   "pytest-cov",
 ]
 types = [
-  "mypy[install-types, faster-cache, reports]",
+  "mypy[install-types, faster-cache, reports]>=1.16",
 ]
 
 [tool.hatch.envs.default]
@@ -205,7 +205,8 @@ convention = "google"
 [tool.mypy]
 strict = true
 pretty = true
-#allow_redefinition_new = true  # Enable when mypy 1.16 drops
+allow_redefinition_new = true
+local_partial_types = true  # Necessary when allow_redefinition_new is enabled
 allow_redefinition = true
 warn_unreachable = true
 show_error_code_links = true

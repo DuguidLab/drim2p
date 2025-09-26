@@ -35,36 +35,10 @@ Finished motion correction in 0h 1m 0.00s.
 Saved motion correction to file.
 ```
 
-You will now see two new files in your directory:
+The motion corrected data will be saved automatically. However, you won't see a new file in your directory. That is one of the strengths of HDF5. You can store multiple bits of information inside the same file. Think of it as a ZIP archive, it's essentially a folder structure but all inside of one file.
 
-```shell
-tutorial/
-├── imaging_file.h5
-├── imaging_file.ini
-├── imaging_file.raw
-├── imaging_file.xml
-├── imaging_file_displacements.npz             (NEW)
-├── imaging_file_motion_correction_report.txt  (NEW)
-└── settings.toml.base
-```
-
-### Displacements
-
-The `imaging_file_displacements.npz` file is a [compressed NumPy file](https://numpy.org/devdocs/reference/routines.io.html#numpy-binary-files-npy-npz) containing information about the frame-to-frame displacements value used for the motion correction (under the 'displacements' key).
-
-
-### Report
-
-The `imaging_file_motion_correction_report.txt` file is a plain text file containing basic information about what settings were used for the motion correction as well as information about how long it took and which file was corrected.
-
-For our example imaging file, it looks like this:
-
-```text
-Chunk: imaging_file             (name of the file processed)
-Strategy: Fourier               (name of the strategy used)
-Displacement: [50, 50]          (maximum X and Y displacements allowed)
-Processing time: 0h 1m 0.00s    (time taken to motion correction)
-```
+!!! note
+    You don't need to keep the `settings.toml` file around your data. When you apply motion correction to a dataset, the settings used are added to the metadata of the motion corrected dataset.
 
 ## What's next?
 

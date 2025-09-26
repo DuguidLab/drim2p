@@ -455,7 +455,7 @@ dev = [
     { name = "mkdocs-material" },
     { name = "mkdocs-section-index" },
     { name = "mkdocstrings-python" },
-    { name = "mypy", extras = ["install-types", "faster-cache", "reports"] },
+    { name = "mypy", extras = ["install-types", "faster-cache", "reports"], specifier = ">=1.16" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -477,7 +477,7 @@ test = [
     { name = "pytest" },
     { name = "pytest-cov" },
 ]
-types = [{ name = "mypy", extras = ["install-types", "faster-cache", "reports"] }]
+types = [{ name = "mypy", extras = ["install-types", "faster-cache", "reports"], specifier = ">=1.16" }]
 
 [[package]]
 name = "duguidlab-motion-correction"
