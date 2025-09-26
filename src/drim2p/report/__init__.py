@@ -57,7 +57,22 @@ def generate_motion_correction_report(
 
     template = env.get_template(MOTION_REPORT_TEMPLATE)
 
-    template_identifiers = {"session_id": session_id}
+    template_identifiers = {
+        "session_id": session_id,
+        "animal_id": ...,
+        "session_date": ...,
+        "experiment_id": ...,
+        "duration": ...,
+        "frame_num": ...,
+        "filesize": ...,
+        "strategy": ...,
+        "max_displacement": ...,
+        "processing_time": ...,
+        "fig_x_axis_shifts": ...,
+        "fig_y_axis_shifts": ...,
+        "fig_projection_pre": ...,
+        "fig_projection_post": ...,
+    }
 
     out_path = out_dir / pathlib.Path(session_id + "_motion-correction-report.html")
     out_path.write_text(template.render(template_identifiers), encoding="utf-8")
