@@ -53,13 +53,13 @@ def generate_motion_correction_report(
         pathlib.Path: Path to generated report.
     """
     h5file = h5.File(path)
-    session_id = str(path).split("/")[-1].split("_preprocessed")[0]
+    session_id = str(path).split("/")[-1]
 
     template = env.get_template(MOTION_REPORT_TEMPLATE)
 
     template_identifiers = {"session_id": session_id}
 
-    out_path = out_dir / pathlib.Path(str(path).split("/")[-1].replace(".h5", "_report.html"))
+    out_path = out_dir / pathlib.Path(session_id + "_motion-correction-report.html")
     out_path.write_text(template.render(template_identifiers), encoding="utf-8")
 
     return out_path
@@ -86,7 +86,18 @@ def generate_motion_correction_report(
 def generate_roi_drawing_report(
     path: pathlib.Path,
     out_dir: pathlib.Path,
-) -> pathlib.Path: ...
+) -> pathlib.Path:
+    h5file = h5.File(path)
+    session_id = str(path).split("/")[-1]
+
+    template = env.get_template(MOTION_REPORT_TEMPLATE)
+
+    template_identifiers = {"session_id": session_id}
+
+    out_path = out_dir / pathlib.Path(session_id + "_roi-drawing-report.html")
+    out_path.write_text(template.render(template_identifiers), encoding="utf-8")
+
+    return out_path
 
 
 @report.command("signal")
@@ -110,7 +121,18 @@ def generate_roi_drawing_report(
 def generate_signal_extraction_report(
     path: pathlib.Path,
     out_dir: pathlib.Path,
-) -> pathlib.Path: ...
+) -> pathlib.Path:
+    h5file = h5.File(path)
+    session_id = str(path).split("/")[-1]
+
+    template = env.get_template(MOTION_REPORT_TEMPLATE)
+
+    template_identifiers = {"session_id": session_id}
+
+    out_path = out_dir / pathlib.Path(session_id + "_signal-processing-report.html")
+    out_path.write_text(template.render(template_identifiers), encoding="utf-8")
+
+    return out_path
 
 
 @report.command("deltaf")
@@ -134,4 +156,15 @@ def generate_signal_extraction_report(
 def generate_deltaf_report(
     path: pathlib.Path,
     out_dir: pathlib.Path,
-) -> pathlib.Path: ...
+) -> pathlib.Path:
+    h5file = h5.File(path)
+    session_id = str(path).split("/")[-1]
+
+    template = env.get_template(MOTION_REPORT_TEMPLATE)
+
+    template_identifiers = {"session_id": session_id}
+
+    out_path = out_dir / pathlib.Path(session_id + "_deltaf-report.html")
+    out_path.write_text(template.render(template_identifiers), encoding="utf-8")
+
+    return out_path
