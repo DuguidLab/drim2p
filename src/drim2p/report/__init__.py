@@ -65,10 +65,73 @@ def generate_motion_correction_report(
     return out_path
 
 
-def generate_roi_drawing_report(): ...
+@report.command("roi")
+@click.argument(
+    "path",
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=True,
+        readable=True,
+        path_type=pathlib.Path,
+    ),
+)
+@click.option(
+    "-o",
+    "--out_dir",
+    type=click.Path(dir_okay=True),
+    default=".",
+    help="Output directory for roi drawing report.",
+)
+def generate_roi_drawing_report(
+    path: pathlib.Path,
+    out_dir: pathlib.Path,
+) -> pathlib.Path: ...
 
 
-def generate_signal_extraction_report(): ...
+@report.command("signal")
+@click.argument(
+    "path",
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=True,
+        readable=True,
+        path_type=pathlib.Path,
+    ),
+)
+@click.option(
+    "-o",
+    "--out_dir",
+    type=click.Path(dir_okay=True),
+    default=".",
+    help="Output directory for signal extraction report.",
+)
+def generate_signal_extraction_report(
+    path: pathlib.Path,
+    out_dir: pathlib.Path,
+) -> pathlib.Path: ...
 
 
-def generate_deltaf_report(): ...
+@report.command("deltaf")
+@click.argument(
+    "path",
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=True,
+        readable=True,
+        path_type=pathlib.Path,
+    ),
+)
+@click.option(
+    "-o",
+    "--out_dir",
+    type=click.Path(dir_okay=True),
+    default=".",
+    help="Output directory for deltaf report.",
+)
+def generate_deltaf_report(
+    path: pathlib.Path,
+    out_dir: pathlib.Path,
+) -> pathlib.Path: ...
