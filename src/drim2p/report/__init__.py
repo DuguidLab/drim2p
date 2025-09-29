@@ -60,7 +60,7 @@ def generate_motion_correction_report(
     template_identifiers = {
         "session_id": session_id,
         "animal_id": session_id.split("_")[0].replace("sub-", ""),
-        "session_date": session_id.split("_date-")[-1].replace("_", ":"),
+        "session_date": session_id.split("_ses-")[-1].split("_")[0].replace("_", ":"),
         "experiment_id": session_id.split("_exp-")[-1].split("_")[0],
         "duration": str(
             (np.datetime64(h5file.get("timestamps")[-1]) - np.datetime64(h5file.get("timestamps")[0])).astype(  # type: ignore[attr-defined]
@@ -71,9 +71,10 @@ def generate_motion_correction_report(
         ),
         "frame_num": len(h5file.get("/acquisition/imaging")),  # type: ignore[attr-defined]
         "filesize": h5file.id.get_filesize() / (1024 * 1024),
-        "strategy": ...,
-        "max_displacement": ...,
-        "processing_time": ...,
+        "strategy": str(h5file["preprocessing/motion_correction/imaging"].attrs.get("STRATEGY")),
+        "max_displacement": str(h5file["preprocessing/motion_correction/imaging"].attrs.get("MAX_DISPLACEMENT"))
+        + " µm",
+        "processing_time": str(h5file["preprocessing/motion_correction/imaging"].attrs.get("PROCESSING_TIME")),
         "fig_x_axis_shifts": ...,
         "fig_y_axis_shifts": ...,
         "fig_projection_pre": ...,
