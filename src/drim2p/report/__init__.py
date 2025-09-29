@@ -4,6 +4,7 @@ import pathlib
 import click
 import h5py as h5
 import numpy as np
+import drim2p.motion.qa as motion_qa
 from jinja2 import Environment
 from jinja2 import PackageLoader
 from jinja2 import select_autoescape
@@ -57,6 +58,16 @@ def generate_motion_correction_report(
 
     template = env.get_template(MOTION_REPORT_TEMPLATE)
 
+    frame_shifts_x_axis = np.array(h5file.get("qa/motion_correction/displacements"))[:, 0]  # type: ignore
+    frame_shifts_y_axis = np.array(h5file.get("qa/motion_correction/displacements"))[:, 1]  # type: ignore
+
+    # Generate pre- and post-correction mean projection images
+    click.echo("Generating pre-correction mean intensity projection...")
+    pre_meanip = motion_qa.generate_meanip(np.array(h5file.get("acquisition/imaging")))
+
+    click.echo("Generating post-correction mean intensity projection...")
+    post_meanip = motion_qa.generate_meanip(np.array(h5file.get("preprocessing/motion_correction/imaging")))
+
     template_identifiers = {
         "session_id": session_id,
         "animal_id": session_id.split("_")[0].replace("sub-", ""),
@@ -75,10 +86,10 @@ def generate_motion_correction_report(
         "max_displacement": str(h5file["preprocessing/motion_correction/imaging"].attrs.get("MAX_DISPLACEMENT"))
         + " µm",
         "processing_time": str(h5file["preprocessing/motion_correction/imaging"].attrs.get("PROCESSING_TIME")),
-        "fig_x_axis_shifts": ...,
-        "fig_y_axis_shifts": ...,
-        "fig_projection_pre": ...,
-        "fig_projection_post": ...,
+        "fig_x_axis_shifts": motion_qa.plot_frame_shifts(frame_shifts_x_axis, label="x-axis shifts", as_html=True),
+        "fig_y_axis_shifts": motion_qa.plot_frame_shifts(frame_shifts_y_axis, label="y-axis shifts", as_html=True),
+        "fig_projection_pre": motion_qa.plot_projection(pre_meanip, as_html=True),
+        "fig_projection_post": motion_qa.plot_projection(post_meanip, as_html=True),
     }
 
     out_path = out_dir / pathlib.Path(session_id + "_motion-correction-report.html")

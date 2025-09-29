@@ -21,9 +21,7 @@ from drim2p import models
 _logger = logging.getLogger(__name__)
 
 
-def _parse_max_displacement(
-    _: Any, __: Any, max_displacement: str
-) -> tuple[int, int] | None:
+def _parse_max_displacement(_: Any, __: Any, max_displacement: str) -> tuple[int, int] | None:
     x, y = max_displacement.split(",")
     try:
         x = int(x)
@@ -55,13 +53,8 @@ def _parse_max_displacement(
     "-S",
     "--strategy",
     required=False,
-    type=click.Choice(
-        [strategy.name for strategy in models.Strategy], case_sensitive=False
-    ),
-    help=(
-        "Strategy to use for motion correction. This is ignored if a settings path is "
-        "provided."
-    ),
+    type=click.Choice([strategy.name for strategy in models.Strategy], case_sensitive=False),
+    help=("Strategy to use for motion correction. This is ignored if a settings path is provided."),
 )
 @click.option(
     "-d",
@@ -78,9 +71,7 @@ def _parse_max_displacement(
     "-s",
     "--settings-path",
     required=False,
-    type=click.Path(
-        exists=True, file_okay=True, dir_okay=False, path_type=pathlib.Path
-    ),
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=pathlib.Path),
     help=(
         "Path to the settings file to use. A strategy and max displacements can be "
         "provided together to remove the need for a settings file."
@@ -202,10 +193,7 @@ def apply_motion_correction(
     elif strategy is not None and max_displacement is not None:
         settings = models.MotionConfig(strategy=strategy, displacement=max_displacement)
     else:
-        _logger.error(
-            "Please provide both a strategy and max displacement manually or through a "
-            "settings file."
-        )
+        _logger.error("Please provide both a strategy and max displacement manually or through a settings file.")
         return
 
     for path in io.find_paths(source, [".h5"], include, exclude, recursive, True):
@@ -228,9 +216,7 @@ def _apply_motion_correction(
     file = h5py.File(path, "a", locking=False)
 
     if has_a_motion_corrected_dataset(file) and not force:
-        _logger.info(
-            f"Skipping '{path}' as it was already corrected and --force is not set."
-        )
+        _logger.info(f"Skipping '{path}' as it was already corrected and --force is not set.")
         return
 
     # Retrieve strategy object
@@ -242,21 +228,15 @@ def _apply_motion_correction(
                 verbose=True,
             )
         case models.Strategy.Plane:
-            strategy = sima.motion.PlaneTranslation2D(
-                max_displacement=settings.displacement
-            )
+            strategy = sima.motion.PlaneTranslation2D(max_displacement=settings.displacement)
         case models.Strategy.Fourier:
-            strategy = sima.motion.DiscreteFourier2D(
-                max_displacement=settings.displacement
-            )
+            strategy = sima.motion.DiscreteFourier2D(max_displacement=settings.displacement)
         case _:
             message = f"Strategy '{settings.strategy}' not implemented"  # type: ignore[unreachable]
             raise NotImplementedError(message)
 
     # Start motion correction
-    _logger.info(
-        f"Applying motion correction for '{path.stem}' using {settings.strategy.value}."
-    )
+    _logger.info(f"Applying motion correction for '{path.stem}' using {settings.strategy.value}.")
     start_time = time.perf_counter()
 
     # Where sima puts dataset information during motion correction.
@@ -268,9 +248,7 @@ def _apply_motion_correction(
         shutil.rmtree(temp_sima_dataset_path)
 
     # Create a `Sequence` object from the HDF5 file that sima understands
-    sequences = [
-        sima.Sequence.create("HDF5", path, key=io.ACQ_IMAGING_PATH, dim_order="tyx")
-    ]
+    sequences = [sima.Sequence.create("HDF5", path, key=io.ACQ_IMAGING_PATH, dim_order="tyx")]
     # Motion correct
     dataset, displacements = strategy.correct(sequences, temp_sima_dataset_path)
 
@@ -282,18 +260,11 @@ def _apply_motion_correction(
 
     # Save motion corrected dataset and displacements
     if has_a_motion_corrected_dataset(file):  # Remote corrected dataset if it exists
-        _logger.debug(
-            f"Removing existing motion corrected 'imaging' dataset from '{path}'."
-        )
+        _logger.debug(f"Removing existing motion corrected 'imaging' dataset from '{path}'.")
         del file[io.MOT_IMAGING_PATH]
 
-    compression, compression_opts, shuffle = io.get_h5py_compression_parameters(
-        compression, compression_opts
-    )
-    _logger.debug(
-        f"Saving 'imaging' dataset to '{path}' "
-        f"({compression=}, {compression_opts=}, {shuffle=})."
-    )
+    compression, compression_opts, shuffle = io.get_h5py_compression_parameters(compression, compression_opts)
+    _logger.debug(f"Saving 'imaging' dataset to '{path}' ({compression=}, {compression_opts=}, {shuffle=}).")
 
     # Manually save the motion-corrected sequence instead of using dataset.export_frames
     # to avoid extra dimensions, and because we're a bit faster when working with larger
