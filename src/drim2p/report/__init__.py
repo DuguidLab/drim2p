@@ -5,6 +5,7 @@ import click
 import h5py as h5
 import numpy as np
 import drim2p.motion.qa as motion_qa
+import drim2p.draw.qa as roi_qa
 from jinja2 import Environment
 from jinja2 import PackageLoader
 from jinja2 import select_autoescape
@@ -123,9 +124,18 @@ def generate_roi_drawing_report(
     h5file = h5.File(path)
     session_id = str(path).split("/")[-1]
 
-    template = env.get_template(MOTION_REPORT_TEMPLATE)
+    template = env.get_template(ROI_REPORT_TEMPLATE)
 
-    template_identifiers = {"session_id": session_id}
+    rois = [roi for _, roi in h5file["/preprocessing/rois"].items()]
+
+    template_identifiers = {
+        "session_id": session_id,
+        "fig_rois": roi_qa.plot_rois(
+            mean_projection=h5file["/qa/motion_correction/mean_projection"],
+            rois=rois,
+            as_html=True,
+        ),
+    }
 
     out_path = out_dir / pathlib.Path(session_id + "_roi-drawing-report.html")
     out_path.write_text(template.render(template_identifiers), encoding="utf-8")
