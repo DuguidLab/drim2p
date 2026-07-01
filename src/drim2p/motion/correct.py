@@ -13,6 +13,7 @@ from typing import get_args
 import click
 import h5py
 import numpy as np
+import numpy.typing as npt
 
 from drim2p import cli_utils
 from drim2p import io
@@ -140,6 +141,16 @@ def _parse_max_displacement(
     ),
 )
 @click.option(
+    "--noop",
+    required=False,
+    is_flag=True,
+    help=(
+        "Make the motion correction simply copy over the raw recording. This should be "
+        "used in cases where the motion correction fails or produces incorrect "
+        "results, and there are minimal motion artefacts on the raw recording."
+    ),
+)
+@click.option(
     "--force",
     required=False,
     is_flag=True,
@@ -165,6 +176,7 @@ def apply_motion_correction(
     exclude: str | None = None,
     compression: io.COMPRESSION | None = None,
     compression_opts: int | None = None,
+    noop: bool = False,
     force: bool = False,
 ) -> None:
     """Applies motion correction on HDF5 chunks.
@@ -197,6 +209,8 @@ def apply_motion_correction(
         compression (io.COMPRESSION | None, optional): Compression algorithm to use.
         compression_opts (int | None, optional):
             Compression options to use with the given algorithm.
+        noop (bool, optional):
+            Whether to skip motion correction and simply copy over the raw recording.
         force (bool, optional): Whether to ovewrite output datasets if they exist.
     """
     # Parse settings
@@ -214,7 +228,9 @@ def apply_motion_correction(
     for path in io.find_paths(source, [".h5"], include, exclude, recursive, True):
         _logger.debug(f"Motion correcting '{path}'.")
 
-        _apply_motion_correction(path, settings, compression, compression_opts, force)
+        _apply_motion_correction(
+            path, settings, compression, compression_opts, noop, force
+        )
 
 
 def _apply_motion_correction(
@@ -222,11 +238,9 @@ def _apply_motion_correction(
     settings: models.MotionConfig,
     compression: io.COMPRESSION | None,
     compression_opts: int | None,
+    noop: bool = False,
     force: bool = False,
 ) -> None:
-    # Lazy time-consuming import
-    import sima
-
     # Keep own handle to check for motion correction dataset
     file = h5py.File(path, "a", locking=False)
 
@@ -236,46 +250,19 @@ def _apply_motion_correction(
         )
         return
 
-    # Retrieve strategy object
-    match settings.strategy:
-        case models.Strategy.Markov:
-            strategy = sima.motion.HiddenMarkov2D(
-                granularity="plane",
-                max_displacement=settings.displacement,
-                verbose=True,
-            )
-        case models.Strategy.Plane:
-            strategy = sima.motion.PlaneTranslation2D(
-                max_displacement=settings.displacement
-            )
-        case models.Strategy.Fourier:
-            strategy = sima.motion.DiscreteFourier2D(
-                max_displacement=settings.displacement
-            )
-        case _:
-            message = f"Strategy '{settings.strategy}' not implemented"  # type: ignore[unreachable]
-            raise NotImplementedError(message)
-
     # Start motion correction
     _logger.info(
         f"Applying motion correction for '{path.stem}' using {settings.strategy.value}."
     )
     start_time = time.perf_counter()
 
-    # Where sima puts dataset information during motion correction.
-    # SIMA uses 'os.makedirs' without 'exist_ok' so we need to make sure there isn't
-    # a cache already (e.g., something prevented a previous run from completing).
-    temp_sima_dataset_path = path.parent / f".{path.with_suffix('.sima').name}"
-    if temp_sima_dataset_path.exists():
-        _logger.debug("Deleting existing SIMA folder.")
-        shutil.rmtree(temp_sima_dataset_path)
-
-    # Create a `Sequence` object from the HDF5 file that sima understands
-    sequences = [
-        sima.Sequence.create("HDF5", path, key=io.ACQ_IMAGING_PATH, dim_order="tyx")
-    ]
-    # Motion correct
-    dataset, displacements = strategy.correct(sequences, temp_sima_dataset_path)
+    if noop:
+        sequence = file[io.ACQ_IMAGING_PATH][:]
+        displacements = np.array([])
+        shape = sequence.shape
+    else:
+        sequence, displacements = _apply_motion_correction_sima(path, settings)
+        shape = sequence.shape[0:1] + sequence.shape[2:4]
 
     duration = time.perf_counter() - start_time
     hours, duration = divmod(duration, 3600)
@@ -302,25 +289,22 @@ def _apply_motion_correction(
     # to avoid extra dimensions, and because we're a bit faster when working with larger
     # files, and because SIMA saves it as float64 with no decimal part (?) and we can
     # save 3/4 of the space by keeping it uint16.
-    sequence = dataset.sequences[0]
-    shape = sequence.shape
     imaging_dataset = file.create_dataset(
         io.MOT_IMAGING_PATH,
-        shape=shape[0:1] + shape[2:4],
+        shape=shape,
         dtype=np.uint16,
-        chunks=(1, *shape[2:4]),
+        chunks=(1, *shape[1:]),
         compression=compression,
         compression_opts=compression_opts,
         shuffle=shuffle,
     )
     for i, frame in enumerate(iter(sequence)):
-        # No need to use `np.round` as the decimal part is seemingly always 0
+        # With SIMA, no need to use `np.round` as the decimal part is always 0
         imaging_dataset[i] = frame.squeeze().astype(np.uint16)
 
     _logger.debug("Saving displacements.")
 
-    displacements = displacements[0].squeeze()  # Go from 1xTx1x2 to Tx2
-    with contextlib.suppress(KeyError):  # Ensure it doesn't exist
+    with contextlib.suppress(KeyError):  # Ensure no displacement data exists
         del file[io.MOT_DISPLACEMENTS_PATH]
     file.create_dataset(io.MOT_DISPLACEMENTS_PATH, data=displacements)
 
@@ -331,11 +315,61 @@ def _apply_motion_correction(
 
     _logger.info("Saved motion correction to file.")
 
+
+def _apply_motion_correction_sima(
+    path: pathlib.Path,
+    settings: models.MotionConfig,
+) -> tuple[npt.NDArray[Any], npt.NDArray[Any]]:
+    # Lazy time-consuming import
+    import sima
+
+    # Retrieve strategy object
+    match settings.strategy:
+        case models.Strategy.Markov:
+            strategy = sima.motion.HiddenMarkov2D(
+                granularity="plane",
+                max_displacement=settings.displacement,
+                verbose=True,
+            )
+        case models.Strategy.Plane:
+            strategy = sima.motion.PlaneTranslation2D(
+                max_displacement=settings.displacement
+            )
+        case models.Strategy.Fourier:
+            strategy = sima.motion.DiscreteFourier2D(
+                max_displacement=settings.displacement
+            )
+        case _:
+            message = f"Strategy '{settings.strategy}' not implemented"  # type: ignore[unreachable]
+            raise NotImplementedError(message)
+
+    # Where sima puts dataset information during motion correction.
+    # SIMA uses 'os.makedirs' without 'exist_ok' so we need to make sure there isn't
+    # a cache already (e.g., something prevented a previous run from completing).
+    temp_sima_dataset_path = path.parent / f".{path.with_suffix('.sima').name}"
+    if temp_sima_dataset_path.exists():
+        _logger.debug("Deleting existing SIMA folder.")
+        shutil.rmtree(temp_sima_dataset_path)
+
+    # Create a `Sequence` object from the HDF5 file that sima understands
+    sequences = [
+        sima.Sequence.create("HDF5", path, key=io.ACQ_IMAGING_PATH, dim_order="tyx")
+    ]
+    # Motion correct
+    dataset, displacements = strategy.correct(sequences, temp_sima_dataset_path)
+
+    # Extract sequence and displacements
+    sequence = dataset.sequences[0]
+    displacements = displacements[0].squeeze()  # Go from 1xTx1x2 to Tx2
+
+    # Clean up SIMA artefacts
     _logger.debug("Cleaning up sima directory.")
     shutil.rmtree(
         temp_sima_dataset_path,
         onexc=lambda *_: _logger.debug("Failed to delete sima directory."),
     )
+
+    return sequence, displacements
 
 
 def has_a_motion_corrected_dataset(handle: h5py.File) -> bool:
