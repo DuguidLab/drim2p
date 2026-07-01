@@ -222,6 +222,9 @@ module = [
 ]
 ignore_missing_imports = true
 
+[tool.basedpyright]
+reportImplicitStringConcatenation = false # Avoid nesting implicit concatenation of string in function calls
+
 # `coverage` config
 [tool.coverage.run]
 source_pkgs = ["drim2p", "tests"]
