@@ -35,6 +35,9 @@ Finished motion correction in 0h 1m 0.00s.
 Saved motion correction to file.
 ```
 
+!!! note
+    There are situations where motion correction with SIMA can fail (either with an error during correction or by outputting incorrect data). In such cases, you can use the `--noop` flag to skip motion correction. This has the effect of faking motion correction by pretending the raw data is already motion corrected.
+
 The motion corrected data will be saved automatically. However, you won't see a new file in your directory. That is one of the strengths of HDF5. You can store multiple bits of information inside the same file. Think of it as a ZIP archive, it's essentially a folder structure but all inside of one file.
 
 !!! note
