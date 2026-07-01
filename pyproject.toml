@@ -33,7 +33,7 @@ dependencies = [
   "duguidlab-signal-separation",  # FISSA fork
   "h5py",
   "napari[pyqt6]",
-  "numpy",
+  "numpy<2.0",
   "ome-types[lxml]",
   "pydantic",
 ]
